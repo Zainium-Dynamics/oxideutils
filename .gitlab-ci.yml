@@ -21,8 +21,8 @@ cache:
     - target/
 
 before_script:
-  # C toolchain, LLVM dev tools, aur Clang (fuzzing and bindgen prerequisites)
-  - apt-get update -qq && apt-get install -y -qq build-essential clang llvm binutils > /dev/null
+  # C toolchain, LLVM dev tools, and Clang + libclang for bindgen-based crates.
+  - apt-get update -qq && apt-get install -y -qq build-essential clang libclang-dev llvm binutils > /dev/null
   - rustc --version && cargo --version
 
 test:
