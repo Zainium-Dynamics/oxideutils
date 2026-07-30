@@ -1,0 +1,74 @@
+image: rust:latest
+
+stages:
+  - test
+  - build
+  - bench
+  - release
+
+variables:
+  CARGO_TERM_COLOR: always
+
+before_script:
+  - rustc --version && cargo --version
+
+test:
+  stage: test
+  script:
+    - rustup component add rustfmt clippy
+    - cargo fmt --all -- --check
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo test --workspace
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+build:
+  stage: build
+  script:
+    - bash scripts/build-all.sh
+    - cargo build --workspace --release
+    - cargo build -p oxideutils-core --release --no-default-features --features "alloc,disasm,kernel" --target-dir target-nostd
+  artifacts:
+    paths:
+      - target/release/oxide-*
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+# Weekly speed smoke-test vs GNU binutils (if present on the runner).
+# Needs a Schedule configured in GitLab → CI/CD → Schedules to actually
+# fire on a cron; also runnable manually via "Run pipeline" (web source).
+bench:
+  stage: bench
+  script:
+    - cargo build --release -p oxide-objdump -p oxide-nm -p oxide-readelf
+    - |
+      BIN=/bin/ls
+      echo "=== oxide-objdump -h ==="
+      time ./target/release/oxide-objdump -h "$BIN" >/dev/null
+      if command -v objdump >/dev/null; then
+        echo "=== gnu objdump -h ==="
+        time objdump -h "$BIN" >/dev/null
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+release:
+  stage: release
+  script:
+    - cargo build --workspace --release
+  artifacts:
+    name: "oxideutils-$CI_COMMIT_TAG"
+    paths:
+      - target/release/oxide-objdump
+      - target/release/oxide-nm
+      - target/release/oxide-readelf
+      - target/release/oxide-size
+      - target/release/oxide-ar
+      - target/release/oxide-strings
+      - target/release/oxideutils
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
