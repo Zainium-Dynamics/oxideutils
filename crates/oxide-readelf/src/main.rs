@@ -1,7 +1,7 @@
 //! oxide-readelf — display ELF file information (GNU readelf compatible subset).
 
 use clap::Parser;
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use oxideutils_core::cli::utils::Status;
 use oxideutils_core::error::Result;
 use oxideutils_core::format::elf::ElfFile;
@@ -159,7 +159,11 @@ fn process(path: &Path, args: &Args) -> Result<()> {
         print!("{}", elf.format_unwind());
     }
     if let Some(sec) = &args.sframe {
-        let name = if sec.is_empty() { ".sframe" } else { sec.as_str() };
+        let name = if sec.is_empty() {
+            ".sframe"
+        } else {
+            sec.as_str()
+        };
         print!("{}", elf.format_sframe(Some(name)));
     }
 

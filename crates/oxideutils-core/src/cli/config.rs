@@ -355,10 +355,7 @@ impl OxideToml {
 fn env_truthy(key: &str) -> bool {
     match env::var(key) {
         Ok(v) if v.is_empty() => true,
-        Ok(v) => matches!(
-            v.to_ascii_lowercase().as_str(),
-            "1" | "true" | "yes" | "on"
-        ),
+        Ok(v) => matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"),
         Err(env::VarError::NotPresent) => false,
         Err(_) => false,
     }

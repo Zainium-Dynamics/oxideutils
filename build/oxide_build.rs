@@ -383,7 +383,10 @@ fn write_build_plan(root: &Path, cfg: &BuildConfig, toml: Option<&Path>) {
     s.push_str(&format!("dynamic_link   = {}\n", cfg.dynamic_link));
     s.push_str(&format!("kernel (flag)  = {}\n", cfg.kernel));
     s.push_str(&format!("features.disasm          = {}\n", cfg.disasm));
-    s.push_str(&format!("features.disasm_aarch64  = {}\n", cfg.disasm_aarch64));
+    s.push_str(&format!(
+        "features.disasm_aarch64  = {}\n",
+        cfg.disasm_aarch64
+    ));
     s.push_str(&format!("features.dwarf           = {}\n", cfg.dwarf));
     s.push_str("tools:\n");
     s.push_str(&format!("  objdump   = {}\n", cfg.tools.objdump));
@@ -391,7 +394,10 @@ fn write_build_plan(root: &Path, cfg: &BuildConfig, toml: Option<&Path>) {
     s.push_str(&format!("  readelf   = {}\n", cfg.tools.readelf));
     s.push_str(&format!("  size      = {}\n", cfg.tools.size));
     s.push_str(&format!("  strings   = {}\n", cfg.tools.strings));
-    s.push_str(&format!("  ar        = {}  (also gates oxide-ranlib)\n", cfg.tools.ar));
+    s.push_str(&format!(
+        "  ar        = {}  (also gates oxide-ranlib)\n",
+        cfg.tools.ar
+    ));
     s.push_str(&format!("  strip     = {}\n", cfg.tools.strip));
     s.push_str(&format!("  objcopy   = {}\n", cfg.tools.objcopy));
     s.push_str(&format!("  addr2line = {}\n", cfg.tools.addr2line));

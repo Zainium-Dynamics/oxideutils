@@ -17,9 +17,14 @@ pub enum OxideError {
         source: std::io::Error,
     },
 
-    UnrecognizedFormat { path: String },
+    UnrecognizedFormat {
+        path: String,
+    },
 
-    Format { path: String, message: String },
+    Format {
+        path: String,
+        message: String,
+    },
 
     Object(String),
 
@@ -31,7 +36,10 @@ pub enum OxideError {
 
     InvalidArgument(String),
 
-    Tool { tool: &'static str, message: String },
+    Tool {
+        tool: &'static str,
+        message: String,
+    },
 
     SectionNotFound(String),
 

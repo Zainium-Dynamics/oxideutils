@@ -2,7 +2,7 @@
 
 use clap::Parser;
 use object::{Object, ObjectSection, SectionKind};
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use oxideutils_core::cli::utils::Status;
 use oxideutils_core::error::Result;
 use oxideutils_core::format::object::OxideObject;
@@ -21,7 +21,12 @@ use std::process::ExitCode;
 )]
 struct Args {
     /// Output format: berkeley (default) or sysv
-    #[arg(short = 'A', long = "format", default_value = "berkeley", value_name = "FORMAT")]
+    #[arg(
+        short = 'A',
+        long = "format",
+        default_value = "berkeley",
+        value_name = "FORMAT"
+    )]
     format: String,
 
     /// Print totals for Berkeley format
@@ -77,9 +82,7 @@ fn main() -> ExitCode {
     }
     if args.totals && berkeley {
         let dec = tot_text + tot_data + tot_bss;
-        println!(
-            "{tot_text:>10} {tot_data:>10} {tot_bss:>10} {dec:>10} {dec:>10x} (TOTALS)"
-        );
+        println!("{tot_text:>10} {tot_data:>10} {tot_bss:>10} {dec:>10} {dec:>10x} (TOTALS)");
     }
     status.exit_code()
 }

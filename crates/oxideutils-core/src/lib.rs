@@ -41,21 +41,21 @@ pub mod archive;
 pub mod disasm;
 
 // ---- std-only subsystems (host tools, kernel leaves these out) ----
-/// Host configuration & CLI helpers (`std` only). TOML: see `cli::config::OxideToml`.
-#[cfg(feature = "std")]
-pub mod cli;
-#[cfg(feature = "std")]
-pub mod strip;
-#[cfg(feature = "std")]
-pub mod objcopy;
 #[cfg(feature = "std")]
 pub mod addr2line_util;
 /// GNU `ar` create/modify/ranlib (`std` only).
 #[cfg(feature = "std")]
 pub mod archive_write;
+/// Host configuration & CLI helpers (`std` only). TOML: see `cli::config::OxideToml`.
+#[cfg(feature = "std")]
+pub mod cli;
+#[cfg(feature = "std")]
+pub mod objcopy;
+#[cfg(feature = "std")]
+pub mod strip;
 
 #[cfg(feature = "alloc")]
-pub use archive::{is_archive, OxideArchive};
+pub use archive::{OxideArchive, is_archive};
 pub use error::{OxideError, Result};
 pub use format::object::OxideObject;
 pub use format::{ObjectView, SectionView};

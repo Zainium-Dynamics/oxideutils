@@ -10,16 +10,16 @@ mod parser;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use encode::{encode_insn, PendingReloc, RelocKind};
+use encode::{PendingReloc, RelocKind, encode_insn};
 use object::write::{Object, Relocation, StandardSection, Symbol, SymbolSection};
 use object::{
     Architecture, BinaryFormat, Endianness, RelocationEncoding, RelocationFlags, RelocationKind,
     SectionKind, SymbolFlags, SymbolKind, SymbolScope,
 };
-use parser::{parse_assembly, Directive, SectionKind as AsmSection, Statement};
+use parser::{Directive, SectionKind as AsmSection, Statement, parse_assembly};
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -48,7 +48,7 @@ fn main() -> Result<()> {
     }
 
     let input_path = cli.input.unwrap_or_else(|| PathBuf::from("-"));
-    let source_text = if input_path == PathBuf::from("-") {
+    let source_text = if input_path == Path::new("-") {
         use std::io::Read;
         let mut buffer = String::new();
         std::io::stdin()
@@ -61,10 +61,10 @@ fn main() -> Result<()> {
     };
 
     let object_bytes = assemble_x86_64(&source_text, cli.verbose)?;
-    if let Some(parent) = cli.output.parent() {
-        if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = cli.output.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        fs::create_dir_all(parent)?;
     }
     fs::write(&cli.output, &object_bytes)
         .with_context(|| format!("Failed to write object file: {}", cli.output.display()))?;
@@ -309,18 +309,17 @@ pub fn assemble_x86_64(source: &str, verbose: bool) -> Result<Vec<u8>> {
 }
 
 fn build_elf_object(sections: &BTreeMap<String, SecBuf>, verbose: bool) -> Result<Vec<u8>> {
-    let mut obj = Object::new(
-        BinaryFormat::Elf,
-        Architecture::X86_64,
-        Endianness::Little,
-    );
+    let mut obj = Object::new(BinaryFormat::Elf, Architecture::X86_64, Endianness::Little);
 
     let mut section_ids = BTreeMap::new();
     let mut symbol_ids: BTreeMap<String, object::write::SymbolId> = BTreeMap::new();
 
     // Create sections + defined symbols first.
     for (name, buf) in sections {
-        if buf.data.is_empty() && buf.symbols.is_empty() && buf.relocs.is_empty() && buf.bss_size == 0
+        if buf.data.is_empty()
+            && buf.symbols.is_empty()
+            && buf.relocs.is_empty()
+            && buf.bss_size == 0
         {
             continue;
         }
@@ -532,7 +531,10 @@ mod tests {
             "expected relocation for call puts, got none"
         );
         // undefined puts must exist
-        assert!(f.symbols().any(|s| s.name() == Ok("puts") && s.is_undefined()));
+        assert!(
+            f.symbols()
+                .any(|s| s.name() == Ok("puts") && s.is_undefined())
+        );
     }
 
     #[test]
@@ -568,9 +570,6 @@ mod tests {
         let f = object::File::parse(&*bytes).unwrap();
         let text = f.sections().find(|s| s.name() == Ok(".text")).unwrap();
         // movl $5, %eax → b8 05 00 00 00 ; then ret → c3
-        assert_eq!(
-            text.data().unwrap(),
-            &[0xb8, 0x05, 0x00, 0x00, 0x00, 0xc3]
-        );
+        assert_eq!(text.data().unwrap(), &[0xb8, 0x05, 0x00, 0x00, 0x00, 0xc3]);
     }
 }

@@ -4,7 +4,7 @@
 //! name) and `oxide-cxxfilt` (ASCII-safe alias) — same behavior either way.
 
 use clap::Parser;
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
@@ -57,7 +57,11 @@ fn main() -> ExitCode {
     let _ = (args.no_strip_underscore, args.strip_underscore, args.types);
 
     let opts = cpp_demangle::DemangleOptions::new();
-    let opts = if args.no_params { opts.no_params() } else { opts };
+    let opts = if args.no_params {
+        opts.no_params()
+    } else {
+        opts
+    };
 
     if !args.symbols.is_empty() {
         for sym in &args.symbols {
@@ -81,10 +85,10 @@ fn demangle_one(sym: &str, cpp_opts: &cpp_demangle::DemangleOptions) -> String {
     if let Ok(d) = rustc_demangle::try_demangle(sym) {
         return d.to_string();
     }
-    if let Ok(parsed) = cpp_demangle::Symbol::new(sym) {
-        if let Ok(demangled) = parsed.demangle(cpp_opts) {
-            return demangled;
-        }
+    if let Ok(parsed) = cpp_demangle::Symbol::new(sym)
+        && let Ok(demangled) = parsed.demangle(cpp_opts)
+    {
+        return demangled;
     }
     sym.to_string()
 }

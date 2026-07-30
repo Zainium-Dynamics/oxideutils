@@ -324,9 +324,7 @@ fn dump_one_func(
     } else {
         "DEFAULT"
     };
-    s.push_str(&format!(
-        "\n  func #{idx} [{fde_name}]\n"
-    ));
+    s.push_str(&format!("\n  func #{idx} [{fde_name}]\n"));
     s.push_str(&format!(
         "    start PC: {:016x}  size: {:#x}  FREs: {}  fre_type: {fre_name}  pc: {pc_name}",
         start_vma, fd.size, fd.num_fres
@@ -380,11 +378,7 @@ struct Fre {
     words: Vec<i32>,
 }
 
-fn parse_fre(
-    buf: &[u8],
-    fre_type: u8,
-    le: bool,
-) -> core::result::Result<(Fre, usize), String> {
+fn parse_fre(buf: &[u8], fre_type: u8, le: bool) -> core::result::Result<(Fre, usize), String> {
     let addr_sz = fre_addr_size(fre_type)?;
     if buf.len() < addr_sz + 1 {
         return Err("short FRE".into());
@@ -483,9 +477,7 @@ fn format_fre_line(h: &SframeHeader, fre_pc: u64, fre: &Fre) -> String {
         }
     };
     let ra_mark = if mangled { "[s]" } else { "   " };
-    format!(
-        "{fre_pc:016x}  {cfa_s:<10} {fp_s:<10} {ra_s}{ra_mark}"
-    )
+    format!("{fre_pc:016x}  {cfa_s:<10} {fp_s:<10} {ra_s}{ra_mark}")
 }
 
 fn fre_addr_size(fre_type: u8) -> core::result::Result<usize, String> {
@@ -604,7 +596,7 @@ mod tests {
         v.extend_from_slice(&3u32.to_le_bytes());
         v.extend_from_slice(&0u32.to_le_bytes()); // fdeoff
         v.extend_from_slice(&20u32.to_le_bytes()); // freoff = after 20-byte FDE
-                                                   // FDE v2 (20)
+        // FDE v2 (20)
         v.extend_from_slice(&0i32.to_le_bytes()); // start
         v.extend_from_slice(&0x20u32.to_le_bytes()); // size
         v.extend_from_slice(&0u32.to_le_bytes()); // fre_off
@@ -612,7 +604,7 @@ mod tests {
         v.push(0); // fre_type ADDR1, pc INC
         v.push(0); // rep
         v.extend_from_slice(&0u16.to_le_bytes()); // pad
-                                                 // FRE: start=0, info=sp+1word 1B = base SP(1) count1 size0 => 0b00000011
+        // FRE: start=0, info=sp+1word 1B = base SP(1) count1 size0 => 0b00000011
         v.push(0); // start
         v.push(0x03); // info
         v.push(16); // cfa offset 16
@@ -626,6 +618,9 @@ mod tests {
         assert!(text.contains("Num FDEs"), "{text}");
         assert!(text.contains("func #0"), "{text}");
         assert!(text.contains("sp+16") || text.contains("CFA"), "{text}");
-        assert!(text.contains("0000000000001000") || text.contains("1000"), "{text}");
+        assert!(
+            text.contains("0000000000001000") || text.contains("1000"),
+            "{text}"
+        );
     }
 }

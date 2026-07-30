@@ -2,7 +2,7 @@
 
 use clap::Parser;
 use oxideutils_core::addr2line_util::{Addr2LineContext, Addr2LineOptions};
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use oxideutils_core::error::{OxideError, Result};
 use oxideutils_core::utils::parse_address;
 use std::io::{self, BufRead, Write};
@@ -20,7 +20,12 @@ use std::process::ExitCode;
 )]
 struct Args {
     /// Executable or shared object that has debug info
-    #[arg(short = 'e', long = "exe", default_value = "a.out", value_name = "FILE")]
+    #[arg(
+        short = 'e',
+        long = "exe",
+        default_value = "a.out",
+        value_name = "FILE"
+    )]
     exe: PathBuf,
 
     /// Show function names

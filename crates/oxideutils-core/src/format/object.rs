@@ -7,9 +7,7 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::fmt::Display;
-use object::{
-    Architecture, BinaryFormat, Endianness, File, Object, ObjectSection, SectionKind,
-};
+use object::{Architecture, BinaryFormat, Endianness, File, Object, ObjectSection, SectionKind};
 
 /// Opened object file with a path/label for diagnostics.
 pub struct OxideObject<'data> {
@@ -244,9 +242,9 @@ fn map_section_kind(k: SectionKind) -> SectionKindView {
     match k {
         SectionKind::Text => SectionKindView::Text,
         SectionKind::Data => SectionKindView::Data,
-        SectionKind::ReadOnlyData | SectionKind::ReadOnlyString | SectionKind::ReadOnlyDataWithRel => {
-            SectionKindView::ReadOnlyData
-        }
+        SectionKind::ReadOnlyData
+        | SectionKind::ReadOnlyString
+        | SectionKind::ReadOnlyDataWithRel => SectionKindView::ReadOnlyData,
         SectionKind::UninitializedData => SectionKindView::UninitializedData,
         SectionKind::Tls => SectionKindView::Tls,
         SectionKind::UninitializedTls => SectionKindView::UninitializedTls,

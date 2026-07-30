@@ -7,7 +7,7 @@
 //!   lea sym(%rip), %reg → R_X86_64_PC32
 //!   mov $sym, %reg (32-bit) → R_X86_64_32
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 /// Pending relocation relative to the start of the encoded instruction.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,7 +31,11 @@ pub enum RelocKind {
     Abs32,
     /// R_X86_64_64 — S + A (64-bit absolute)
     Abs64,
-    /// R_X86_64_32S — signed 32-bit absolute
+    /// R_X86_64_32S — signed 32-bit absolute. Not yet emitted by any
+    /// encoder path (no AT&T operand form here needs the signed variant
+    /// over plain `Abs32`), kept for API completeness against the real
+    /// ELF reloc type and matched exhaustively in `main.rs`.
+    #[allow(dead_code)]
     Abs32S,
     /// R_X86_64_TPOFF32 — local-exec TLS: tpoff(S) + A, a plain 32-bit
     /// absolute write (no GOT, no PC-relative component).
@@ -320,8 +324,22 @@ fn gpr_is_64(s: &str) -> bool {
     let s = s.trim().trim_start_matches('%');
     matches!(
         s,
-        "rax" | "rbx" | "rcx" | "rdx" | "rsi" | "rdi" | "rbp" | "rsp"
-            | "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15"
+        "rax"
+            | "rbx"
+            | "rcx"
+            | "rdx"
+            | "rsi"
+            | "rdi"
+            | "rbp"
+            | "rsp"
+            | "r8"
+            | "r9"
+            | "r10"
+            | "r11"
+            | "r12"
+            | "r13"
+            | "r14"
+            | "r15"
     )
 }
 
@@ -463,8 +481,14 @@ fn parse_mem_operand(s: &str) -> Option<MemOperand> {
         parse_imm(&format!("${disp_s}"))? as i32
     };
     let parts: Vec<&str> = inside.split(',').map(|p| p.trim()).collect();
-    let base = parts.first().filter(|p| !p.is_empty()).and_then(|p| parse_reg(p));
-    let index = parts.get(1).filter(|p| !p.is_empty()).and_then(|p| parse_reg(p));
+    let base = parts
+        .first()
+        .filter(|p| !p.is_empty())
+        .and_then(|p| parse_reg(p));
+    let index = parts
+        .get(1)
+        .filter(|p| !p.is_empty())
+        .and_then(|p| parse_reg(p));
     let scale = match parts.get(2).map(|p| p.trim()) {
         None | Some("") => 1u8,
         Some(p) => {
@@ -495,9 +519,8 @@ fn encode_modrm_mem(reg: u8, mem: &MemOperand) -> Vec<u8> {
     // rsp/r12 (encoding 100 in the base field) always require a SIB byte —
     // rm=100 in a plain ModRM means "SIB follows", it can never address
     // those registers directly. Likewise any index, or no base at all.
-    let need_sib = mem.index.is_some()
-        || mem.base.is_none()
-        || mem.base.is_some_and(|b| b.num & 7 == 4);
+    let need_sib =
+        mem.index.is_some() || mem.base.is_none() || mem.base.is_some_and(|b| b.num & 7 == 4);
     if need_sib {
         let (base_field, no_base) = match mem.base {
             Some(b) => (b.num & 7, false),
@@ -642,10 +665,10 @@ fn encode_mov(operands: &[String], size: OpSize) -> Result<EncodedInsn> {
         // plain symbol/imm case below since symbol_from_operand() also
         // matches "sym(%rip)" (it just extracts the "sym" part), which would
         // otherwise wrongly be treated as `movabs $sym, %reg`.
-        if src.contains("(%rip)") {
-            if let Some((sym, addend)) = symbol_from_operand(src) {
-                return encode_load_rip(rd, &sym, size, false, addend);
-            }
+        if src.contains("(%rip)")
+            && let Some((sym, addend)) = symbol_from_operand(src)
+        {
+            return encode_load_rip(rd, &sym, size, false, addend);
         }
         // mov $imm/sym, %reg
         if let Some((sym, addend)) = symbol_from_operand(src) {
@@ -661,10 +684,10 @@ fn encode_mov(operands: &[String], size: OpSize) -> Result<EncodedInsn> {
     }
     if let Some(rs) = parse_reg(src) {
         // mov %reg, sym(%rip)
-        if dst.contains("(%rip)") {
-            if let Some((sym, addend)) = symbol_from_operand(dst) {
-                return encode_load_rip(rs, &sym, size, true, addend);
-            }
+        if dst.contains("(%rip)")
+            && let Some((sym, addend)) = symbol_from_operand(dst)
+        {
+            return encode_load_rip(rs, &sym, size, true, addend);
         }
         if let Some(rd) = parse_reg(dst) {
             return Ok(EncodedInsn::raw(encode_mov_rr(rs, rd, size)));
@@ -744,7 +767,13 @@ fn encode_mov_sym_imm(rd: Reg, sym: &str, size: OpSize, addend: i64) -> Result<E
     }
 }
 
-fn encode_load_rip(reg: Reg, sym: &str, size: OpSize, is_store: bool, extra_addend: i64) -> Result<EncodedInsn> {
+fn encode_load_rip(
+    reg: Reg,
+    sym: &str,
+    size: OpSize,
+    is_store: bool,
+    extra_addend: i64,
+) -> Result<EncodedInsn> {
     let (sym, tls_kind) = split_tls_suffix(sym);
     // mov reg/mem with ModRM = [rip+disp32]
     let mut out = Vec::new();
@@ -846,29 +875,29 @@ fn encode_lea(operands: &[String], size: OpSize) -> Result<EncodedInsn> {
     let Some(rd) = parse_reg(&operands[1]) else {
         bail!("oxide-as: unsupported instruction `lea {operands:?}` (dst must be a register)");
     };
-    if mem.contains("(%rip)") {
-        if let Some((sym, addend)) = symbol_from_operand(mem) {
-            let mut out = Vec::new();
-            let w = size != OpSize::L; // lea usually 64-bit
-            if let Some(rx) = rex(w || size == OpSize::Q, rd.num, 0, 0) {
-                out.push(rx);
-            } else if size == OpSize::Q {
-                out.push(0x48);
-            }
-            out.push(0x8d);
-            out.push(modrm(0b00, rd.num, 0b101));
-            let off = out.len() as u8;
-            out.extend_from_slice(&0i32.to_le_bytes());
-            return Ok(EncodedInsn::with_reloc(
-                out,
-                PendingReloc {
-                    offset: off,
-                    symbol: sym,
-                    kind: RelocKind::Pc32,
-                    addend: -4 + addend,
-                },
-            ));
+    if mem.contains("(%rip)")
+        && let Some((sym, addend)) = symbol_from_operand(mem)
+    {
+        let mut out = Vec::new();
+        let w = size != OpSize::L; // lea usually 64-bit
+        if let Some(rx) = rex(w || size == OpSize::Q, rd.num, 0, 0) {
+            out.push(rx);
+        } else if size == OpSize::Q {
+            out.push(0x48);
         }
+        out.push(0x8d);
+        out.push(modrm(0b00, rd.num, 0b101));
+        let off = out.len() as u8;
+        out.extend_from_slice(&0i32.to_le_bytes());
+        return Ok(EncodedInsn::with_reloc(
+            out,
+            PendingReloc {
+                offset: off,
+                symbol: sym,
+                kind: RelocKind::Pc32,
+                addend: -4 + addend,
+            },
+        ));
     }
     // lea disp(base,index,scale), %dst — general SIB/base+disp addressing.
     if let Some(mem_op) = parse_mem_operand(mem) {
@@ -1091,8 +1120,7 @@ fn encode_test(operands: &[String], size: OpSize) -> Result<EncodedInsn> {
     // r/m=mem, reg=the register, opcode 0x84/0x85.
     let mem_reg = match (parse_reg(a), parse_mem_operand(b)) {
         (Some(r), Some(m)) => Some((r, m)),
-        _ => parse_mem_operand(a)
-            .and_then(|m| parse_reg(b).map(|r| (r, m))),
+        _ => parse_mem_operand(a).and_then(|m| parse_reg(b).map(|r| (r, m))),
     };
     if let Some((reg, mem)) = mem_reg {
         let mut out = Vec::new();
@@ -1251,7 +1279,9 @@ fn encode_shift(operands: &[String], size: OpSize, group: u8) -> Result<EncodedI
     }
     let count = &operands[0];
     let Some(rd) = parse_reg(&operands[1]) else {
-        bail!("oxide-as: unsupported instruction (shift op) `{operands:?}` (dst must be a register)");
+        bail!(
+            "oxide-as: unsupported instruction (shift op) `{operands:?}` (dst must be a register)"
+        );
     };
     let mut out = Vec::new();
     let w = size == OpSize::Q;
@@ -1295,11 +1325,7 @@ fn encode_call_jmp(operands: &[String], is_call: bool) -> Result<EncodedInsn> {
         }
         if let Some((sym, addend)) = symbol_from_operand(op) {
             // call/jmp rel32 with PLT32/PC32 reloc (gas uses PLT32 for globals)
-            let mut out = if is_call {
-                vec![0xe8]
-            } else {
-                vec![0xe9]
-            };
+            let mut out = if is_call { vec![0xe8] } else { vec![0xe9] };
             let off = out.len() as u8;
             out.extend_from_slice(&0i32.to_le_bytes());
             return Ok(EncodedInsn::with_reloc(
@@ -1697,7 +1723,10 @@ mod tests {
         // Bare (unsuffixed) mnemonics default to 64-bit in this assembler
         // (size is inferred purely from the mnemonic, not the registers),
         // hence the REX.W prefix on both cases below.
-        assert_eq!(encode_insn("call", &["puts".into()]).unwrap().bytes[0], 0xe8);
+        assert_eq!(
+            encode_insn("call", &["puts".into()]).unwrap().bytes[0],
+            0xe8
+        );
         assert_eq!(
             encode_insn("sub", &["%eax".into(), "%ebx".into()])
                 .unwrap()
@@ -1761,11 +1790,7 @@ mod tests {
     fn encode_movsd_sib_mem_operand() {
         // movsd 8(%rbx,%rax,8), %xmm2  →  f2 0f 10 54 c3 08
         // modrm = mod01 reg=010(xmm2) rm=100(SIB); sib = scale11(8) index000(rax) base011(rbx); disp8=8
-        let e = encode_insn(
-            "movsd",
-            &["8(%rbx,%rax,8)".into(), "%xmm2".into()],
-        )
-        .unwrap();
+        let e = encode_insn("movsd", &["8(%rbx,%rax,8)".into(), "%xmm2".into()]).unwrap();
         assert_eq!(e.bytes, vec![0xf2, 0x0f, 0x10, 0x54, 0xc3, 0x08]);
     }
 

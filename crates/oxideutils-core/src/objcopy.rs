@@ -8,7 +8,7 @@
 //! - binary extract of a single section (`-O binary -j .text` style simplified)
 
 use crate::error::{OxideError, Result};
-use crate::strip::{strip_bytes, StripOptions};
+use crate::strip::{StripOptions, strip_bytes};
 use crate::utils::atomic_write;
 use object::write::{Object as WriteObject, Symbol as WriteSymbol, SymbolSection};
 use object::{
@@ -145,11 +145,7 @@ fn filter_sections(data: &[u8], opts: &ObjcopyOptions) -> anyhow::Result<Vec<u8>
 
 fn filter_via_object_write(data: &[u8], opts: &ObjcopyOptions) -> anyhow::Result<Vec<u8>> {
     let in_obj = object::File::parse(data)?;
-    let mut out = WriteObject::new(
-        in_obj.format(),
-        in_obj.architecture(),
-        in_obj.endianness(),
-    );
+    let mut out = WriteObject::new(in_obj.format(), in_obj.architecture(), in_obj.endianness());
 
     let mut section_map: Vec<Option<object::write::SectionId>> = Vec::new();
 
@@ -224,10 +220,7 @@ fn filter_elf_sections(data: &[u8], opts: &ObjcopyOptions) -> anyhow::Result<Vec
         data,
         StripOptions {
             strip_all: false,
-            strip_debug: opts
-                .remove_sections
-                .iter()
-                .any(|s| s.starts_with(".debug")),
+            strip_debug: opts.remove_sections.iter().any(|s| s.starts_with(".debug")),
             strip_unneeded: false,
         },
     )?;

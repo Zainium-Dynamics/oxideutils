@@ -121,7 +121,10 @@ pub struct DynamicLayout {
 }
 
 /// Build the `.dynamic` section contents (list of `Elf64_Dyn` entries).
-pub fn build_dynamic_section(layout: &DynamicLayout, dynstr_off_of: &BTreeMap<String, u32>) -> Vec<u8> {
+pub fn build_dynamic_section(
+    layout: &DynamicLayout,
+    dynstr_off_of: &BTreeMap<String, u32>,
+) -> Vec<u8> {
     let mut out = Vec::new();
     for lib in &layout.needed {
         let off = dynstr_off_of.get(lib).copied().unwrap_or(0);

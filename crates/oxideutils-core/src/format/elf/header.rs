@@ -1,7 +1,7 @@
 //! ELF file header formatting (readelf -h).
 
-use crate::prelude::*;
 use crate::format::utils::elf_machine_name;
+use crate::prelude::*;
 use goblin::elf::Elf;
 
 pub fn format_elf_header(elf: &Elf<'_>) -> String {

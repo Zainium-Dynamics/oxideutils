@@ -10,9 +10,9 @@ pub mod utils;
 pub mod wasm;
 
 #[cfg(feature = "std")]
-pub mod pe;
-#[cfg(feature = "std")]
 pub mod macho;
+#[cfg(feature = "std")]
+pub mod pe;
 
 pub use object::OxideObject;
 pub use traits::{ObjectView, SectionFlags, SectionKindView, SectionView};

@@ -1,8 +1,8 @@
 //! Phase A/B/C regression tests: strip verify, archive write, atomic write helpers.
 
-use oxideutils_core::archive::{is_archive, OxideArchive};
-use oxideutils_core::archive_write::{ArchiveBuilder, ArOperation};
-use oxideutils_core::strip::{strip_bytes, StripOptions};
+use oxideutils_core::archive::{OxideArchive, is_archive};
+use oxideutils_core::archive_write::{ArOperation, ArchiveBuilder};
+use oxideutils_core::strip::{StripOptions, strip_bytes};
 use oxideutils_core::utils::atomic_write;
 use std::fs;
 use std::path::Path;
@@ -25,11 +25,7 @@ fn compile_pic_obj(dir: &Path, name: &str, src: &str) -> Option<std::path::PathB
         .arg(&c_path)
         .status()
         .ok()?;
-    if status.success() {
-        Some(o_path)
-    } else {
-        None
-    }
+    if status.success() { Some(o_path) } else { None }
 }
 
 #[test]
@@ -98,19 +94,11 @@ fn strip_system_binary_if_present() {
 #[test]
 fn strip_and_ar_with_real_objects() {
     let dir = tempfile::tempdir().unwrap();
-    let Some(a) = compile_pic_obj(
-        dir.path(),
-        "a",
-        "int oxide_a(void) { return 42; }\n",
-    ) else {
+    let Some(a) = compile_pic_obj(dir.path(), "a", "int oxide_a(void) { return 42; }\n") else {
         eprintln!("skip: no cc");
         return;
     };
-    let Some(b) = compile_pic_obj(
-        dir.path(),
-        "b",
-        "int oxide_b(void) { return 7; }\n",
-    ) else {
+    let Some(b) = compile_pic_obj(dir.path(), "b", "int oxide_b(void) { return 7; }\n") else {
         return;
     };
 

@@ -13,7 +13,7 @@ use oxideutils_core::utils::atomic_write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -63,8 +63,7 @@ fn main() -> ExitCode {
     let output_mach = args.output_mach.as_deref().map(parse_machine).transpose();
     let output_type = args.output_type.as_deref().map(parse_type).transpose();
     let output_osabi = args.output_osabi.as_deref().map(parse_osabi).transpose();
-    let (output_mach, output_type, output_osabi) = match (output_mach, output_type, output_osabi)
-    {
+    let (output_mach, output_type, output_osabi) = match (output_mach, output_type, output_osabi) {
         (Ok(m), Ok(t), Ok(o)) => (m, t, o),
         (Err(e), _, _) | (_, Err(e), _) | (_, _, Err(e)) => {
             eprintln!("{e}");
@@ -171,7 +170,7 @@ fn edit_file(path: &Path, edit: &Edit) -> Result<()> {
             return Err(OxideError::format(
                 path.display().to_string(),
                 "invalid ELF data encoding (e_ident[EI_DATA])",
-            ))
+            ));
         }
     };
 
@@ -180,25 +179,25 @@ fn edit_file(path: &Path, edit: &Edit) -> Result<()> {
     let cur_osabi = data[EI_OSABI];
     let cur_abiversion = data[EI_ABIVERSION];
 
-    if let Some(want) = edit.input_mach {
-        if want != cur_mach {
-            return Ok(());
-        }
+    if let Some(want) = edit.input_mach
+        && want != cur_mach
+    {
+        return Ok(());
     }
-    if let Some(want) = edit.input_type {
-        if want != cur_type {
-            return Ok(());
-        }
+    if let Some(want) = edit.input_type
+        && want != cur_type
+    {
+        return Ok(());
     }
-    if let Some(want) = edit.input_osabi {
-        if want != cur_osabi {
-            return Ok(());
-        }
+    if let Some(want) = edit.input_osabi
+        && want != cur_osabi
+    {
+        return Ok(());
     }
-    if let Some(want) = edit.input_abiversion {
-        if want != cur_abiversion {
-            return Ok(());
-        }
+    if let Some(want) = edit.input_abiversion
+        && want != cur_abiversion
+    {
+        return Ok(());
     }
 
     let mut changed = false;
@@ -328,7 +327,7 @@ mod tests {
             input_osabi: None,
             input_abiversion: None,
             output_mach: None,
-            output_type: Some(3), // ET_DYN
+            output_type: Some(3),  // ET_DYN
             output_osabi: Some(3), // ELFOSABI_GNU
             output_abiversion: None,
         };

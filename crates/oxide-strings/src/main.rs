@@ -1,7 +1,7 @@
 //! oxide-strings — print printable strings from files (GNU strings compatible).
 
 use clap::Parser;
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use oxideutils_core::cli::utils::Status;
 use oxideutils_core::error::Result;
 use oxideutils_core::utils::read_file;

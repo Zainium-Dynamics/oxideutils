@@ -1,8 +1,8 @@
 //! oxide-objcopy — copy and transform object files (GNU objcopy subset).
 
 use clap::Parser;
-use oxideutils_core::cli::help::{self, print_version, VERSION};
-use oxideutils_core::objcopy::{objcopy_file, ObjcopyOptions};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
+use oxideutils_core::objcopy::{ObjcopyOptions, objcopy_file};
 use std::path::PathBuf;
 use std::process::ExitCode;
 

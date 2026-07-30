@@ -234,7 +234,9 @@ fn disassemble_x86(
     let mut formatter = GasFormatter::new();
     // AT&T / gas style closer to GNU objdump default on Linux
     formatter.options_mut().set_uppercase_hex(false);
-    formatter.options_mut().set_gas_show_mnemonic_size_suffix(true);
+    formatter
+        .options_mut()
+        .set_gas_show_mnemonic_size_suffix(true);
     formatter.options_mut().set_first_operand_char_index(8);
 
     let mut out = Vec::new();
@@ -368,12 +370,8 @@ fn disassemble_aarch64(
             zero_run = 0;
         }
 
-        let insn_word = u32::from_le_bytes([
-            word_bytes[0],
-            word_bytes[1],
-            word_bytes[2],
-            word_bytes[3],
-        ]);
+        let insn_word =
+            u32::from_le_bytes([word_bytes[0], word_bytes[1], word_bytes[2], word_bytes[3]]);
         let text = match bad64::decode(insn_word, ip) {
             Ok(decoded) => format!("{decoded}"),
             Err(_) => format!(".inst 0x{insn_word:08x} ; undefined"),

@@ -118,9 +118,7 @@ fn resolve_with_loader(
                         let func = frame.function.as_ref().and_then(|f| {
                             let name = f.raw_name().ok().map(|n| n.to_string()).or_else(|| {
                                 // demangle language-aware name if present
-                                f.demangle()
-                                    .ok()
-                                    .map(|n| n.to_string())
+                                f.demangle().ok().map(|n| n.to_string())
                             });
                             name.map(|s| {
                                 if opts.demangle {

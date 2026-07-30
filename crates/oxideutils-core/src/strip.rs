@@ -100,17 +100,14 @@ pub fn strip_bytes(data: &[u8], opts: StripOptions) -> anyhow::Result<Vec<u8>> {
 }
 
 fn verify_still_object(data: &[u8]) -> anyhow::Result<()> {
-    object::File::parse(data).map_err(|e| anyhow::anyhow!("strip produced unreadable object: {e}"))?;
+    object::File::parse(data)
+        .map_err(|e| anyhow::anyhow!("strip produced unreadable object: {e}"))?;
     Ok(())
 }
 
 fn strip_relocatable_object(data: &[u8], opts: StripOptions) -> anyhow::Result<Vec<u8>> {
     let in_obj = object::File::parse(data)?;
-    let mut out = WriteObject::new(
-        in_obj.format(),
-        in_obj.architecture(),
-        in_obj.endianness(),
-    );
+    let mut out = WriteObject::new(in_obj.format(), in_obj.architecture(), in_obj.endianness());
 
     let mut section_map: Vec<Option<object::write::SectionId>> = Vec::new();
 
@@ -118,8 +115,7 @@ fn strip_relocatable_object(data: &[u8], opts: StripOptions) -> anyhow::Result<V
         let name = section.name().unwrap_or("");
         // object crate path has no raw sh_type easily; use name heuristics
         if drop_section(name, 0, 0, opts)
-            || ((opts.strip_all || opts.strip_unneeded)
-                && (name == ".symtab" || name == ".strtab"))
+            || ((opts.strip_all || opts.strip_unneeded) && (name == ".symtab" || name == ".strtab"))
             || ((opts.strip_debug || opts.strip_all) && is_debug_section(name))
         {
             // For relocatable write path, SHF_ALLOC is not available the same way;
@@ -263,31 +259,24 @@ fn r_u64(data: &[u8], off: usize, le: bool) -> u64 {
     }
 }
 fn w_u16(buf: &mut [u8], off: usize, v: u16, le: bool) {
-    let b = if le {
-        v.to_le_bytes()
-    } else {
-        v.to_be_bytes()
-    };
+    let b = if le { v.to_le_bytes() } else { v.to_be_bytes() };
     buf[off..off + 2].copy_from_slice(&b);
 }
 fn w_u32(buf: &mut [u8], off: usize, v: u32, le: bool) {
-    let b = if le {
-        v.to_le_bytes()
-    } else {
-        v.to_be_bytes()
-    };
+    let b = if le { v.to_le_bytes() } else { v.to_be_bytes() };
     buf[off..off + 4].copy_from_slice(&b);
 }
 fn w_u64(buf: &mut [u8], off: usize, v: u64, le: bool) {
-    let b = if le {
-        v.to_le_bytes()
-    } else {
-        v.to_be_bytes()
-    };
+    let b = if le { v.to_le_bytes() } else { v.to_be_bytes() };
     buf[off..off + 8].copy_from_slice(&b);
 }
 
-fn strip_elf_common(data: &[u8], is_64: bool, le: bool, opts: StripOptions) -> anyhow::Result<Vec<u8>> {
+fn strip_elf_common(
+    data: &[u8],
+    is_64: bool,
+    le: bool,
+    opts: StripOptions,
+) -> anyhow::Result<Vec<u8>> {
     let e_ehsize = if is_64 { 64 } else { 52 };
     if data.len() < e_ehsize {
         anyhow::bail!("ELF truncated");
@@ -317,9 +306,7 @@ fn strip_elf_common(data: &[u8], is_64: bool, le: bool, opts: StripOptions) -> a
 
     let expect_shentsize = if is_64 { 64 } else { 40 };
     if e_shentsize != expect_shentsize {
-        anyhow::bail!(
-            "unsupported section header size {e_shentsize} (want {expect_shentsize})"
-        );
+        anyhow::bail!("unsupported section header size {e_shentsize} (want {expect_shentsize})");
     }
     if e_shnum == 0 {
         anyhow::bail!("ELF has no section headers; cannot strip safely");

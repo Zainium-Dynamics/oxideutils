@@ -6,7 +6,7 @@
 //! - long names via `//` string table (`/N` name field)
 //! - symbol map member `/` (32-bit BE offsets) when requested
 
-use crate::archive::{is_archive, OxideArchive};
+use crate::archive::{OxideArchive, is_archive};
 use crate::error::{OxideError, Result};
 use crate::utils::atomic_write;
 use object::{Object, ObjectSymbol};
@@ -96,7 +96,10 @@ impl ArchiveBuilder {
     /// Replace member with same basename, or append.
     pub fn replace_or_add(&mut self, name: String, data: Vec<u8>) {
         let base = member_basename(&name);
-        if let Some(slot) = self.members.iter_mut().find(|m| member_basename(&m.name) == base)
+        if let Some(slot) = self
+            .members
+            .iter_mut()
+            .find(|m| member_basename(&m.name) == base)
         {
             slot.name = base.to_string();
             slot.data = data;
@@ -141,7 +144,10 @@ impl ArchiveBuilder {
     }
 
     pub fn delete(&mut self, names: &[String]) -> usize {
-        let want: Vec<String> = names.iter().map(|n| member_basename(n).to_string()).collect();
+        let want: Vec<String> = names
+            .iter()
+            .map(|n| member_basename(n).to_string())
+            .collect();
         let before = self.members.len();
         self.members
             .retain(|m| !want.iter().any(|n| n == member_basename(&m.name)));
@@ -564,7 +570,11 @@ pub fn run_ar(
         } else {
             files
                 .iter()
-                .filter_map(|p| p.file_name().and_then(|s| s.to_str()).map(|s| s.to_string()))
+                .filter_map(|p| {
+                    p.file_name()
+                        .and_then(|s| s.to_str())
+                        .map(|s| s.to_string())
+                })
                 .collect()
         };
         let n = builder.delete(&names);
@@ -623,7 +633,9 @@ mod tests {
 
     #[test]
     fn roundtrip_emptyish_create() {
-        let mut b = ArchiveBuilder::new().deterministic(true).with_symbol_index(false);
+        let mut b = ArchiveBuilder::new()
+            .deterministic(true)
+            .with_symbol_index(false);
         b.replace_or_add("foo.o".into(), b"hello world".to_vec());
         let bytes = b.to_bytes().unwrap();
         assert!(bytes.starts_with(MAGIC));

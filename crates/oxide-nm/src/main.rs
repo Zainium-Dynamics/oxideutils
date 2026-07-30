@@ -1,12 +1,12 @@
 //! oxide-nm — list symbols from object files (GNU nm compatible).
 
 use clap::Parser;
-use oxideutils_core::archive::{is_archive, OxideArchive};
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::archive::{OxideArchive, is_archive};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use oxideutils_core::cli::utils::Status;
 use oxideutils_core::error::Result;
 use oxideutils_core::format::object::OxideObject;
-use oxideutils_core::symbols::{list_symbols, SymbolFilter, SymbolSort};
+use oxideutils_core::symbols::{SymbolFilter, SymbolSort, list_symbols};
 use oxideutils_core::utils::{map_file, read_file};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -140,10 +140,7 @@ fn print_syms(obj: &OxideObject<'_>, args: &Args, multi: bool) -> Result<()> {
         };
         if s.is_undefined {
             if args.print_size {
-                println!(
-                    "{prefix}{:16} {:8} {} {}",
-                    "", "", s.nm_type_char(), s.name
-                );
+                println!("{prefix}{:16} {:8} {} {}", "", "", s.nm_type_char(), s.name);
             } else {
                 println!("{prefix}{:16} {} {}", "", s.nm_type_char(), s.name);
             }

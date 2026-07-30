@@ -38,7 +38,6 @@ pub fn bug_report_footer() -> &'static str {
     "OxideUtils (Zainium Dynamics) — https://zainiumdynamics.tech"
 }
 
-
 // oxide-objdump
 
 pub mod objdump {
@@ -66,11 +65,11 @@ EXAMPLES
 ";
 }
 
-
 // oxide-readelf
 
 pub mod readelf {
-    pub const ABOUT: &str = "Display ELF structure: headers, symbols, dynamic linking, versions, GOT, SFrame";
+    pub const ABOUT: &str =
+        "Display ELF structure: headers, symbols, dynamic linking, versions, GOT, SFrame";
 
     pub const LONG_ABOUT: &str = "\
 oxide-readelf — the “ELF X-ray” for Linux binaries
@@ -93,11 +92,11 @@ EXAMPLES
 ";
 }
 
-
 // oxide-nm
 
 pub mod nm {
-    pub const ABOUT: &str = "List symbols (functions and variables) from object files and libraries";
+    pub const ABOUT: &str =
+        "List symbols (functions and variables) from object files and libraries";
 
     pub const LONG_ABOUT: &str = "\
 oxide-nm — the “phone book” of a program
@@ -110,7 +109,6 @@ BEGINNER START
   oxide-nm -n -C ./a.out              # by address, demangled
 ";
 }
-
 
 // oxide-ar
 
@@ -125,7 +123,6 @@ MOST COMMON COMMAND
 ";
 }
 
-
 // oxide-ranlib
 
 pub mod ranlib {
@@ -135,7 +132,6 @@ pub mod ranlib {
 oxide-ranlib — rebuild .a archive symbol index
 ";
 }
-
 
 // oxide-strip
 
@@ -147,7 +143,6 @@ oxide-strip — make binaries smaller by dropping symbols
 ";
 }
 
-
 // oxide-objcopy
 
 pub mod objcopy {
@@ -157,7 +152,6 @@ pub mod objcopy {
 oxide-objcopy — copy and transform object files
 ";
 }
-
 
 // oxide-size
 
@@ -169,7 +163,6 @@ oxide-size — how big is my code and data?
 ";
 }
 
-
 // oxide-strings
 
 pub mod strings {
@@ -180,7 +173,6 @@ oxide-strings — find text hidden inside a binary
 ";
 }
 
-
 // oxide-addr2line
 
 pub mod addr2line {
@@ -190,7 +182,6 @@ pub mod addr2line {
 oxide-addr2line — “where in the source is this address?”
 ";
 }
-
 
 // oxide-c++filt
 
@@ -206,7 +197,6 @@ else through unchanged (so it works on raw linker/compiler output).
 ";
 }
 
-
 // oxide-elfedit
 
 pub mod elfedit {
@@ -220,7 +210,6 @@ Give it one or more --output-* fields to change, plus optional
 files that aren't ELF, and files that don't match the input filters.
 ";
 }
-
 
 // Multicall (oxideutils)
 
@@ -253,7 +242,7 @@ Examples:
 OxideUtils is a product of Zainium Dynamics.
 It is a memory-safe rewrite compatible with GNU binutils.
 Project: https://zainiumdynamics.tech
-"
+",
         )
     }
 }

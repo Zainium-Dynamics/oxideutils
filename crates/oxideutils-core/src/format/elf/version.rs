@@ -15,10 +15,7 @@ pub fn format_version_info(elf: &Elf<'_>) -> String {
         s.push_str("\nVersion needs section '.gnu.version_r' contains version needs:\n");
         s.push_str(" Addr: offset 0  (displaying structure)\n");
         for need in verneed.iter() {
-            let file = elf
-                .dynstrtab
-                .get_at(need.vn_file)
-                .unwrap_or("<unknown>");
+            let file = elf.dynstrtab.get_at(need.vn_file).unwrap_or("<unknown>");
             s.push_str(&format!(
                 "  0x{:04x}: Version: {}  File: {}  Cnt: {}\n",
                 need.vn_version, need.vn_version, file, need.vn_cnt

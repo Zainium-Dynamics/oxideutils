@@ -17,7 +17,11 @@ fn print_size_flag_accepted() {
         .args(["-S", p.to_str().unwrap()])
         .output()
         .expect("run oxide-nm");
-    assert!(out.status.success(), "stderr={}", String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "stderr={}",
+        String::from_utf8_lossy(&out.stderr)
+    );
     let text = String::from_utf8_lossy(&out.stdout);
     // With -S, defined symbols show a size column (hex) between addr and type
     // Format: ADDR SIZE TYPE NAME — look for lines with multiple fields
@@ -34,10 +38,7 @@ fn print_size_flag_accepted() {
 #[test]
 fn size_sort_is_long_only() {
     // --size-sort should not conflict with -S
-    let help = Command::new(bin())
-        .arg("--help")
-        .output()
-        .expect("help");
+    let help = Command::new(bin()).arg("--help").output().expect("help");
     let h = String::from_utf8_lossy(&help.stdout);
     assert!(h.contains("print-size") || h.contains("-S"));
     assert!(h.contains("size-sort"));

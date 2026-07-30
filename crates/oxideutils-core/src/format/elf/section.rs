@@ -12,10 +12,7 @@ pub fn format_section_headers(elf: &Elf<'_>) -> String {
     s.push_str("Section Headers:\n");
     s.push_str("  [Nr] Name              Type            Address          Off    Size   ES Flg Lk Inf Al\n");
     for (i, sh) in elf.section_headers.iter().enumerate() {
-        let name = elf
-            .shdr_strtab
-            .get_at(sh.sh_name)
-            .unwrap_or("<corrupt>");
+        let name = elf.shdr_strtab.get_at(sh.sh_name).unwrap_or("<corrupt>");
         s.push_str(&format!(
             "  [{i:2}] {:<17.17} {:<15} {:016x} {:06x} {:06x} {:02x} {:3} {:2} {:3} {:2}\n",
             name,
@@ -68,7 +65,7 @@ fn sh_type(t: u32) -> &'static str {
         11 => "DYNSYM",
         14 => "INIT_ARRAY",
         15 => "FINI_ARRAY",
-        17 => "GNU_HASH" /* often vendor */,
+        17 => "GNU_HASH", // often vendor
         0x6ffffff6 => "GNU_HASH",
         0x6fffffff => "VERSYM",
         0x6ffffffe => "VERNEED",

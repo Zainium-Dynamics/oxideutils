@@ -15,7 +15,7 @@
 //! back to the *build host's* libraries, which would be a correctness trap
 //! when cross-linking for a different libc/OS.
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use object::read::{Object, ObjectSection, ObjectSymbol};
 use std::collections::BTreeSet;
 use std::fs;
@@ -155,10 +155,10 @@ pub fn scan_shared_object(path: &Path) -> Result<SharedLibInfo> {
         if sym.is_undefined() {
             continue;
         }
-        if let Ok(name) = sym.name() {
-            if !name.is_empty() {
-                exports.insert(name.to_string());
-            }
+        if let Ok(name) = sym.name()
+            && !name.is_empty()
+        {
+            exports.insert(name.to_string());
         }
     }
 
@@ -174,7 +174,7 @@ pub fn scan_shared_object(path: &Path) -> Result<SharedLibInfo> {
 /// Manually walk `.dynamic` + `.dynstr` for `DT_SONAME` (tag 14); the `object`
 /// crate's read API doesn't expose dynamic-section tags directly.
 fn read_soname(file: &object::File, _bytes: &[u8]) -> Option<String> {
-    use object::{elf, Endian, Endianness};
+    use object::{Endian, Endianness, elf};
 
     let dynamic = file.sections().find(|s| s.name() == Ok(".dynamic"))?;
     let dynstr = file.sections().find(|s| s.name() == Ok(".dynstr"))?;

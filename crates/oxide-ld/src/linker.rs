@@ -17,14 +17,14 @@
 //! 6. Emit ELF `ET_EXEC` / `ET_DYN` with `PT_LOAD` (+ `PT_INTERP` /
 //!    `PT_DYNAMIC` as needed) and real section headers + `.symtab`.
 
-use crate::archive::{load_archive, LoadedArchive};
+use crate::archive::{LoadedArchive, load_archive};
 use crate::dynamic::{self, RelativeReloc};
 use crate::elfout::{self, ExecutableImage, Section as OutSec, SymbolEnt};
 use crate::libsearch::{self, ResolvedInput, SharedLibInfo};
-use crate::objload::{parse_one_object, DefinedSymbol, LoadedObject};
+use crate::objload::{DefinedSymbol, LoadedObject, parse_one_object};
 use crate::reloc::apply_reloc;
 use crate::script::LinkerScript;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use object::elf;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -146,7 +146,13 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
     for unit in &units {
         match unit {
             Unit::Object(obj) => {
-                merge_object(obj, &script, &mut outputs, &mut defined, &mut undefined_refs);
+                merge_object(
+                    obj,
+                    &script,
+                    &mut outputs,
+                    &mut defined,
+                    &mut undefined_refs,
+                );
             }
             Unit::Archive(ar) => {
                 for i in 0..ar.members.len() {
@@ -158,7 +164,9 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
                     needed_libs.push(info.soname.clone());
                 }
                 for name in &info.exports {
-                    dynamic_exports.entry(name.clone()).or_insert_with(|| info.soname.clone());
+                    dynamic_exports
+                        .entry(name.clone())
+                        .or_insert_with(|| info.soname.clone());
                 }
             }
         }
@@ -172,13 +180,27 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
                 continue;
             }
             let member = &ar.members[*member_idx];
-            let provides = member.object.symbols.iter().any(|s| undefined_refs.contains(&s.name));
+            let provides = member
+                .object
+                .symbols
+                .iter()
+                .any(|s| undefined_refs.contains(&s.name));
             if provides {
-                merge_object(&member.object, &script, &mut outputs, &mut defined, &mut undefined_refs);
+                merge_object(
+                    &member.object,
+                    &script,
+                    &mut outputs,
+                    &mut defined,
+                    &mut undefined_refs,
+                );
                 extracted[idx] = true;
                 changed = true;
                 if config.verbose {
-                    println!("[*] extracted {}({}) for a needed symbol", ar.path.display(), member.name);
+                    println!(
+                        "[*] extracted {}({}) for a needed symbol",
+                        ar.path.display(),
+                        member.name
+                    );
                 }
             }
         }
@@ -253,7 +275,9 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
         dyn_export_syms.sort();
     }
 
-    let has_dynamic = !plt_imports.is_empty() || !dyn_export_syms.is_empty() || matches!(link_type, LinkType::Shared);
+    let has_dynamic = !plt_imports.is_empty()
+        || !dyn_export_syms.is_empty()
+        || matches!(link_type, LinkType::Shared);
 
     // ---- Phase 1: TLS layout (Variant II, x86_64 psABI) ----
     // `.tdata` (initialized) then `.tbss` (zero-fill) form one logical
@@ -261,8 +285,14 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
     // - round_up(tls_size, tls_align)`. This is independent of wherever
     // `.tdata`/`.tbss` actually end up in the final VMA layout — the offset
     // is purely a function of their *sizes*, known right after merge.
-    let tdata_size = outputs.get(".tdata").map(|o| o.data.len() as u64).unwrap_or(0);
-    let tbss_size = outputs.get(".tbss").map(|o| o.data.len() as u64).unwrap_or(0);
+    let tdata_size = outputs
+        .get(".tdata")
+        .map(|o| o.data.len() as u64)
+        .unwrap_or(0);
+    let tbss_size = outputs
+        .get(".tbss")
+        .map(|o| o.data.len() as u64)
+        .unwrap_or(0);
     let tls_align = outputs
         .get(".tdata")
         .map(|o| o.align)
@@ -297,10 +327,9 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
     let mut got_tls_data = Vec::with_capacity(gottpoff_syms.len() * 8);
     for (i, sym_name) in gottpoff_syms.iter().enumerate() {
         gottpoff_index.insert(sym_name.clone(), i);
-        let tpoff = defined
-            .get(sym_name)
-            .map(tpoff_of)
-            .with_context(|| format!("oxide-ld: `{sym_name}@gottpoff' does not name a .tdata/.tbss symbol"))?;
+        let tpoff = defined.get(sym_name).map(tpoff_of).with_context(|| {
+            format!("oxide-ld: `{sym_name}@gottpoff' does not name a .tdata/.tbss symbol")
+        })?;
         got_tls_data.extend_from_slice(&(tpoff as u64).to_le_bytes());
     }
 
@@ -311,9 +340,10 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
         outputs
             .iter()
             .flat_map(|(sec_name, o)| {
-                o.relocs.iter().filter_map(move |(off, r_type, _, sym)| {
-                    (*r_type == elf::R_X86_64_64).then(|| (sec_name.clone(), *off, sym.clone()))
-                })
+                o.relocs
+                    .iter()
+                    .filter(|&(_off, r_type, _, _sym)| *r_type == elf::R_X86_64_64)
+                    .map(|(off, _r_type, _, sym)| (sec_name.clone(), *off, sym.clone()))
             })
             .filter(|(_, _, sym)| defined.contains_key(sym))
             .collect()
@@ -370,7 +400,9 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
     let (dynstr_data, dynstr_off) = build_dynstr(&dynstr_names);
 
     if has_dynamic {
-        let hash_data = dynamic::build_hash_section(&dynsym_names.iter().map(String::as_str).collect::<Vec<_>>());
+        let hash_data = dynamic::build_hash_section(
+            &dynsym_names.iter().map(String::as_str).collect::<Vec<_>>(),
+        );
 
         let mut dynsym_data = vec![0u8; 24]; // STN_UNDEF
         for name in &dynsym_names {
@@ -445,7 +477,12 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
         dynamic_sec.link = Some(".dynstr".to_string());
         // sized by build_dynamic_section below once real tag list is known;
         // placeholder same length (tag count is static given our inputs).
-        let placeholder_len = dynamic_entry_count(&needed_libs, config.soname.is_some(), !plt_imports.is_empty(), relative_count > 0) * 16;
+        let placeholder_len = dynamic_entry_count(
+            &needed_libs,
+            config.soname.is_some(),
+            !plt_imports.is_empty(),
+            relative_count > 0,
+        ) * 16;
         dynamic_sec.data = vec![0u8; placeholder_len];
 
         image.dynamic_sections.push(gotplt_sec);
@@ -491,7 +528,9 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
     let plt_vma = vmas.get(".plt").copied().unwrap_or(0);
     let got_tls_vma = vmas.get(".got.tls").copied().unwrap_or(0);
     for sec in image.sections.iter_mut() {
-        let Some(out) = outputs.get(&sec.name) else { continue };
+        let Some(out) = outputs.get(&sec.name) else {
+            continue;
+        };
         let sec_vma = vmas.get(&sec.name).copied().unwrap_or(0);
         for (offset, r_type, addend, sym_name) in &out.relocs {
             let s = if matches!(*r_type, elf::R_X86_64_TPOFF32 | elf::R_X86_64_TPOFF64) {
@@ -527,20 +566,29 @@ pub fn link_elf_executable(config: &LinkerConfig) -> Result<()> {
             name: name.clone(),
             value: vma,
             size: 0,
-            info: ((if sym.global || sym.weak { elf::STB_GLOBAL } else { elf::STB_LOCAL }) << 4) | elf::STT_NOTYPE,
+            info: ((if sym.global || sym.weak {
+                elf::STB_GLOBAL
+            } else {
+                elf::STB_LOCAL
+            }) << 4)
+                | elf::STT_NOTYPE,
             shndx: 1,
             global: sym.global || sym.weak,
         });
     }
 
     let bytes = elfout::emit(&image, base_rx)?;
-    if let Some(parent) = config.output_path.parent() {
-        if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = config.output_path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        fs::create_dir_all(parent)?;
     }
-    fs::write(&config.output_path, &bytes)
-        .with_context(|| format!("Failed to write linked binary: {}", config.output_path.display()))?;
+    fs::write(&config.output_path, &bytes).with_context(|| {
+        format!(
+            "Failed to write linked binary: {}",
+            config.output_path.display()
+        )
+    })?;
 
     if config.verbose {
         println!(
@@ -570,14 +618,16 @@ fn merge_object(
         let Some(out_name) = script.map_input_section(&sec.name) else {
             continue;
         };
-        let out = outputs.entry(out_name.clone()).or_insert_with(|| OutputSectionData {
-            data: Vec::new(),
-            relocs: Vec::new(),
-            align: 1,
-        });
+        let out = outputs
+            .entry(out_name.clone())
+            .or_insert_with(|| OutputSectionData {
+                data: Vec::new(),
+                relocs: Vec::new(),
+                align: 1,
+            });
         let align = sec.align.max(1);
         out.align = out.align.max(align);
-        while !out.data.is_empty() && (out.data.len() as u64) % align != 0 {
+        while !out.data.is_empty() && !(out.data.len() as u64).is_multiple_of(align) {
             out.data.push(if out_name == ".text" { 0x90 } else { 0 });
         }
         let base = out.data.len() as u64;
@@ -640,33 +690,40 @@ fn inject_crt_symbols(
     // always a consistent, valid, zero-length range rather than undefined
     // when no object contributes to them.
     for name in [".init_array", ".fini_array", ".preinit_array"] {
-        outputs.entry(name.to_string()).or_insert_with(|| OutputSectionData {
-            data: Vec::new(),
-            relocs: Vec::new(),
-            align: 8,
-        });
+        outputs
+            .entry(name.to_string())
+            .or_insert_with(|| OutputSectionData {
+                data: Vec::new(),
+                relocs: Vec::new(),
+                align: 8,
+            });
     }
 
-    let provide = |defined: &mut BTreeMap<String, DefinedSymbol>, name: &str, section: &str, offset: u64| {
-        if defined.contains_key(name) {
-            return;
-        }
-        defined.insert(
-            name.to_string(),
-            DefinedSymbol {
-                name: name.to_string(),
-                section: section.to_string(),
-                offset,
-                global: true,
-                weak: false,
-            },
-        );
-    };
+    let provide =
+        |defined: &mut BTreeMap<String, DefinedSymbol>, name: &str, section: &str, offset: u64| {
+            if defined.contains_key(name) {
+                return;
+            }
+            defined.insert(
+                name.to_string(),
+                DefinedSymbol {
+                    name: name.to_string(),
+                    section: section.to_string(),
+                    offset,
+                    global: true,
+                    weak: false,
+                },
+            );
+        };
 
     for (base, start_name, end_name) in [
         (".init_array", "__init_array_start", "__init_array_end"),
         (".fini_array", "__fini_array_start", "__fini_array_end"),
-        (".preinit_array", "__preinit_array_start", "__preinit_array_end"),
+        (
+            ".preinit_array",
+            "__preinit_array_start",
+            "__preinit_array_end",
+        ),
     ] {
         let size = outputs.get(base).map(|o| o.data.len() as u64).unwrap_or(0);
         provide(defined, start_name, base, 0);
@@ -683,13 +740,19 @@ fn inject_crt_symbols(
         .find(|n| outputs.contains_key(**n))
         .copied();
     if let Some(bss_or_fallback) = anchor {
-        let bss_size = outputs.get(".bss").map(|o| o.data.len() as u64).unwrap_or(0);
+        let bss_size = outputs
+            .get(".bss")
+            .map(|o| o.data.len() as u64)
+            .unwrap_or(0);
         let data_end_anchor = [".data", ".rodata", ".text"]
             .iter()
             .find(|n| outputs.contains_key(**n))
             .copied()
             .unwrap_or(bss_or_fallback);
-        let data_end_size = outputs.get(data_end_anchor).map(|o| o.data.len() as u64).unwrap_or(0);
+        let data_end_size = outputs
+            .get(data_end_anchor)
+            .map(|o| o.data.len() as u64)
+            .unwrap_or(0);
 
         provide(defined, "_edata", data_end_anchor, data_end_size);
         provide(defined, "edata", data_end_anchor, data_end_size);
@@ -756,7 +819,12 @@ fn build_dynstr(names: &[String]) -> (Vec<u8>, BTreeMap<String, u32>) {
     (data, offsets)
 }
 
-fn dynamic_entry_count(needed: &[String], has_soname: bool, has_plt: bool, has_rela_dyn: bool) -> usize {
+fn dynamic_entry_count(
+    needed: &[String],
+    has_soname: bool,
+    has_plt: bool,
+    has_rela_dyn: bool,
+) -> usize {
     // NEEDED*n + SONAME? + HASH+STRTAB+SYMTAB+STRSZ+SYMENT (5) +
     // (PLTGOT+PLTRELSZ+PLTREL+JMPREL)?(4) + (RELA+RELASZ+RELAENT)?(3) + FLAGS + NULL
     needed.len()
@@ -806,13 +874,23 @@ fn patch_dynamic_content(
         plt_bytes.extend_from_slice(&dynamic::build_plt_stub(slot_vma, entry_vma));
         // dynsym index: import entries are written first (index 1..=n).
         let dynsym_idx = 1 + idx as u32;
-        dynamic::write_rela_entry(&mut rela_plt_bytes, slot_vma, elf::R_X86_64_JUMP_SLOT, dynsym_idx, 0);
+        dynamic::write_rela_entry(
+            &mut rela_plt_bytes,
+            slot_vma,
+            elf::R_X86_64_JUMP_SLOT,
+            dynsym_idx,
+            0,
+        );
     }
     set_section_data(image, ".plt", plt_bytes);
     set_section_data(image, ".rela.plt", rela_plt_bytes);
 
     // .dynsym: patch export entries' st_value/st_shndx now that we know them.
-    if let Some(sec) = image.dynamic_sections.iter_mut().find(|s| s.name == ".dynsym") {
+    if let Some(sec) = image
+        .dynamic_sections
+        .iter_mut()
+        .find(|s| s.name == ".dynsym")
+    {
         let base = 24 + plt_imports.len() * 24; // skip STN_UNDEF + imports
         for (i, name) in dyn_export_syms.iter().enumerate() {
             let off = base + i * 24;
@@ -829,7 +907,13 @@ fn patch_dynamic_content(
     // .rela.dyn (RELATIVE self-relocs for PIC abs64 against locally defined syms).
     let mut rela_dyn_bytes = Vec::new();
     for r in relatives {
-        dynamic::write_rela_entry(&mut rela_dyn_bytes, r.r_offset, elf::R_X86_64_RELATIVE, 0, r.addend);
+        dynamic::write_rela_entry(
+            &mut rela_dyn_bytes,
+            r.r_offset,
+            elf::R_X86_64_RELATIVE,
+            0,
+            r.addend,
+        );
     }
     set_section_data(image, ".rela.dyn", rela_dyn_bytes);
 
@@ -852,7 +936,11 @@ fn patch_dynamic_content(
 
 fn set_section_data(image: &mut ExecutableImage, name: &str, data: Vec<u8>) {
     if let Some(sec) = image.dynamic_sections.iter_mut().find(|s| s.name == name) {
-        debug_assert_eq!(sec.data.len(), data.len(), "section {name} size drifted between layout and emit passes");
+        debug_assert_eq!(
+            sec.data.len(),
+            data.len(),
+            "section {name} size drifted between layout and emit passes"
+        );
         sec.data = data;
     }
 }
@@ -928,7 +1016,10 @@ fn emit_empty_smoke_binary(config: &LinkerConfig, link_type: LinkType) -> Result
 
     let bytes = elfout::emit(&image, base_rx)?;
     fs::write(&config.output_path, &bytes).with_context(|| {
-        format!("Failed to write linked binary: {}", config.output_path.display())
+        format!(
+            "Failed to write linked binary: {}",
+            config.output_path.display()
+        )
     })?;
     Ok(())
 }
@@ -947,8 +1038,10 @@ mod tests {
             let off = phoff + i * phentsize;
             let p_type = u32::from_le_bytes(data[off..off + 4].try_into().unwrap());
             if p_type == 3 {
-                let p_offset = u64::from_le_bytes(data[off + 8..off + 16].try_into().unwrap()) as usize;
-                let p_filesz = u64::from_le_bytes(data[off + 32..off + 40].try_into().unwrap()) as usize;
+                let p_offset =
+                    u64::from_le_bytes(data[off + 8..off + 16].try_into().unwrap()) as usize;
+                let p_filesz =
+                    u64::from_le_bytes(data[off + 32..off + 40].try_into().unwrap()) as usize;
                 let s = std::str::from_utf8(&data[p_offset..p_offset + p_filesz])
                     .unwrap()
                     .trim_end_matches('\0')

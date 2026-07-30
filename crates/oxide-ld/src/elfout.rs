@@ -92,11 +92,18 @@ pub struct ExecutableImage {
 }
 
 fn header_reserve(image: &ExecutableImage) -> u64 {
-    align_up(EHDR_SIZE + phnum(image) as u64 * PHDR_SIZE + interp_len(image), 16)
+    align_up(
+        EHDR_SIZE + phnum(image) as u64 * PHDR_SIZE + interp_len(image),
+        16,
+    )
 }
 
 fn interp_len(image: &ExecutableImage) -> u64 {
-    image.interp.as_ref().map(|s| s.len() as u64 + 1).unwrap_or(0)
+    image
+        .interp
+        .as_ref()
+        .map(|s| s.len() as u64 + 1)
+        .unwrap_or(0)
 }
 
 fn has_rx(image: &ExecutableImage) -> bool {
@@ -112,7 +119,10 @@ fn has_dynamic(image: &ExecutableImage) -> bool {
 }
 
 fn has_tls(image: &ExecutableImage) -> bool {
-    image.sections.iter().any(|s| s.name == ".tdata" || s.name == ".tbss")
+    image
+        .sections
+        .iter()
+        .any(|s| s.name == ".tdata" || s.name == ".tbss")
 }
 
 fn phnum(image: &ExecutableImage) -> u16 {
@@ -140,11 +150,7 @@ fn all_alloc_mut(image: &mut ExecutableImage) -> impl Iterator<Item = &mut Secti
 }
 
 fn align_up(v: u64, a: u64) -> u64 {
-    if a <= 1 {
-        v
-    } else {
-        (v + a - 1) & !(a - 1)
-    }
+    if a <= 1 { v } else { (v + a - 1) & !(a - 1) }
 }
 
 /// Pass 1: assign every `alloc` section's final VMA (mutates `image` in
@@ -216,13 +222,18 @@ pub fn emit(image: &ExecutableImage, base_rx: u64) -> Result<Vec<u8>> {
         .map(|s| s.vma + s.data.len() as u64)
         .unwrap_or(rw_vma0);
     let rw_memsz = rw_end_vma - rw_vma0;
-    let rw_filesz: u64 = rw_secs.iter().filter(|s| !s.nobits).map(|s| {
-        // contiguous-with-padding size up to (but not including) this
-        // section's own bytes is handled by the write loop below; for the
-        // *segment* filesz we just need "up to the end of the last non-bss
-        // section with data", i.e. skip trailing .bss from filesz.
-        s.vma + s.data.len() as u64 - rw_vma0
-    }).max().unwrap_or(0);
+    let rw_filesz: u64 = rw_secs
+        .iter()
+        .filter(|s| !s.nobits)
+        .map(|s| {
+            // contiguous-with-padding size up to (but not including) this
+            // section's own bytes is handled by the write loop below; for the
+            // *segment* filesz we just need "up to the end of the last non-bss
+            // section with data", i.e. skip trailing .bss from filesz.
+            s.vma + s.data.len() as u64 - rw_vma0
+        })
+        .max()
+        .unwrap_or(0);
 
     // ---- non-alloc metadata section names for .shstrtab ----
     let mut shstrtab_names: Vec<&str> = vec![""];
@@ -257,16 +268,52 @@ pub fn emit(image: &ExecutableImage, base_rx: u64) -> Result<Vec<u8>> {
     const PF_R: u32 = 4;
     if let Some(ref ib) = interp_bytes {
         let off = EHDR_SIZE + pn as u64 * PHDR_SIZE;
-        write_phdr(&mut out, elf::PT_INTERP, PF_R, off, base_rx + off, ib.len() as u64, ib.len() as u64, 1);
+        write_phdr(
+            &mut out,
+            elf::PT_INTERP,
+            PF_R,
+            off,
+            base_rx + off,
+            ib.len() as u64,
+            ib.len() as u64,
+            1,
+        );
     }
     if !rx_secs.is_empty() {
-        write_phdr(&mut out, elf::PT_LOAD, PF_R | PF_X, 0, base_rx, rx_filesz, rx_filesz, PAGE_ALIGN);
+        write_phdr(
+            &mut out,
+            elf::PT_LOAD,
+            PF_R | PF_X,
+            0,
+            base_rx,
+            rx_filesz,
+            rx_filesz,
+            PAGE_ALIGN,
+        );
     }
     if !rw_secs.is_empty() {
-        write_phdr(&mut out, elf::PT_LOAD, PF_R | PF_W, rw_off, rw_vma0, rw_filesz, rw_memsz.max(rw_filesz), PAGE_ALIGN);
+        write_phdr(
+            &mut out,
+            elf::PT_LOAD,
+            PF_R | PF_W,
+            rw_off,
+            rw_vma0,
+            rw_filesz,
+            rw_memsz.max(rw_filesz),
+            PAGE_ALIGN,
+        );
     }
     if let Some(d) = dynamic_sec {
-        write_phdr(&mut out, elf::PT_DYNAMIC, PF_R | PF_W, rw_off + (d.vma - rw_vma0), d.vma, d.data.len() as u64, d.data.len() as u64, 8);
+        write_phdr(
+            &mut out,
+            elf::PT_DYNAMIC,
+            PF_R | PF_W,
+            rw_off + (d.vma - rw_vma0),
+            d.vma,
+            d.data.len() as u64,
+            d.data.len() as u64,
+            8,
+        );
     }
     let tdata_sec = image.sections.iter().find(|s| s.name == ".tdata");
     let tbss_sec = image.sections.iter().find(|s| s.name == ".tbss");
@@ -347,7 +394,12 @@ pub fn emit(image: &ExecutableImage, base_rx: u64) -> Result<Vec<u8>> {
         } else {
             rw_off + (s.vma - rw_vma0)
         };
-        let link_idx = s.link.as_deref().and_then(|l| name_to_shndx.get(l)).copied().unwrap_or(0);
+        let link_idx = s
+            .link
+            .as_deref()
+            .and_then(|l| name_to_shndx.get(l))
+            .copied()
+            .unwrap_or(0);
         write_shdr(
             &mut out,
             *shstrtab_off.get(s.name.as_str()).unwrap_or(&0),
@@ -363,9 +415,45 @@ pub fn emit(image: &ExecutableImage, base_rx: u64) -> Result<Vec<u8>> {
         );
     }
     let symtab_shndx = shndx;
-    write_shdr(&mut out, *shstrtab_off.get(".symtab").unwrap_or(&0), elf::SHT_SYMTAB, 0, 0, symtab_off, symtab_data.len() as u64, (symtab_shndx + 1) as u32, first_global, 8, 24);
-    write_shdr(&mut out, *shstrtab_off.get(".strtab").unwrap_or(&0), elf::SHT_STRTAB, 0, 0, strtab_off, strtab_data.len() as u64, 0, 0, 1, 0);
-    write_shdr(&mut out, *shstrtab_off.get(".shstrtab").unwrap_or(&0), elf::SHT_STRTAB, 0, 0, shstrtab_off_file, shstrtab_data.len() as u64, 0, 0, 1, 0);
+    write_shdr(
+        &mut out,
+        *shstrtab_off.get(".symtab").unwrap_or(&0),
+        elf::SHT_SYMTAB,
+        0,
+        0,
+        symtab_off,
+        symtab_data.len() as u64,
+        (symtab_shndx + 1) as u32,
+        first_global,
+        8,
+        24,
+    );
+    write_shdr(
+        &mut out,
+        *shstrtab_off.get(".strtab").unwrap_or(&0),
+        elf::SHT_STRTAB,
+        0,
+        0,
+        strtab_off,
+        strtab_data.len() as u64,
+        0,
+        0,
+        1,
+        0,
+    );
+    write_shdr(
+        &mut out,
+        *shstrtab_off.get(".shstrtab").unwrap_or(&0),
+        elf::SHT_STRTAB,
+        0,
+        0,
+        shstrtab_off_file,
+        shstrtab_data.len() as u64,
+        0,
+        0,
+        1,
+        0,
+    );
 
     Ok(out)
 }
@@ -416,7 +504,17 @@ fn build_symtab(image: &ExecutableImage) -> (Vec<u8>, Vec<u8>, u32) {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn write_ehdr(out: &mut Vec<u8>, e_type: u16, e_machine: u16, entry: u64, phoff: u64, phnum: u16, shoff: u64, shnum: u16, shstrndx: u16) {
+fn write_ehdr(
+    out: &mut Vec<u8>,
+    e_type: u16,
+    e_machine: u16,
+    entry: u64,
+    phoff: u64,
+    phnum: u16,
+    shoff: u64,
+    shnum: u16,
+    shstrndx: u16,
+) {
     out.extend_from_slice(&[0x7f, b'E', b'L', b'F', 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     out.extend_from_slice(&e_type.to_le_bytes());
     out.extend_from_slice(&e_machine.to_le_bytes());
@@ -434,7 +532,16 @@ fn write_ehdr(out: &mut Vec<u8>, e_type: u16, e_machine: u16, entry: u64, phoff:
 }
 
 #[allow(clippy::too_many_arguments)]
-fn write_phdr(out: &mut Vec<u8>, p_type: u32, p_flags: u32, p_offset: u64, p_vaddr: u64, p_filesz: u64, p_memsz: u64, p_align: u64) {
+fn write_phdr(
+    out: &mut Vec<u8>,
+    p_type: u32,
+    p_flags: u32,
+    p_offset: u64,
+    p_vaddr: u64,
+    p_filesz: u64,
+    p_memsz: u64,
+    p_align: u64,
+) {
     out.extend_from_slice(&p_type.to_le_bytes());
     out.extend_from_slice(&p_flags.to_le_bytes());
     out.extend_from_slice(&p_offset.to_le_bytes());
@@ -446,7 +553,19 @@ fn write_phdr(out: &mut Vec<u8>, p_type: u32, p_flags: u32, p_offset: u64, p_vad
 }
 
 #[allow(clippy::too_many_arguments)]
-fn write_shdr(out: &mut Vec<u8>, name: u32, sh_type: u32, flags: u64, addr: u64, offset: u64, size: u64, link: u32, info: u32, align: u64, entsize: u64) {
+fn write_shdr(
+    out: &mut Vec<u8>,
+    name: u32,
+    sh_type: u32,
+    flags: u64,
+    addr: u64,
+    offset: u64,
+    size: u64,
+    link: u32,
+    info: u32,
+    align: u64,
+    entsize: u64,
+) {
     out.extend_from_slice(&name.to_le_bytes());
     out.extend_from_slice(&sh_type.to_le_bytes());
     out.extend_from_slice(&flags.to_le_bytes());

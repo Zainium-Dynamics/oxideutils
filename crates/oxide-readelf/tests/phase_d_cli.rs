@@ -24,7 +24,10 @@ fn version_info_and_got() {
     );
     let text = String::from_utf8_lossy(&out.stdout);
     assert!(
-        text.contains("Version") || text.contains("version") || text.contains("GOT") || text.contains("eh_frame"),
+        text.contains("Version")
+            || text.contains("version")
+            || text.contains("GOT")
+            || text.contains("eh_frame"),
         "unexpected output length {}",
         text.len()
     );

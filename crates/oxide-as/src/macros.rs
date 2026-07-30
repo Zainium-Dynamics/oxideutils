@@ -64,7 +64,8 @@ pub fn preprocess(source: &str) -> String {
             }
             ".if" => {
                 let cond = enclosing_active
-                    && eval_int_atom(trimmed[".if".len()..].trim(), &known_values).unwrap_or(0) != 0;
+                    && eval_int_atom(trimmed[".if".len()..].trim(), &known_values).unwrap_or(0)
+                        != 0;
                 if_stack.push((enclosing_active && cond, cond, false));
             }
             ".ifdef" | ".ifndef" => {
@@ -201,7 +202,10 @@ fn expand_macro(def: &MacroDef, args_text: &str) -> Vec<String> {
         subst.insert(name.clone(), value.clone());
         subst.insert((i + 1).to_string(), value);
     }
-    def.body.iter().map(|l| substitute_params(l, &subst)).collect()
+    def.body
+        .iter()
+        .map(|l| substitute_params(l, &subst))
+        .collect()
 }
 
 /// Replace every `\name` (longest match first, so `\10` doesn't get read as

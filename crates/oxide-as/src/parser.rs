@@ -88,14 +88,14 @@ pub fn parse_assembly(source: &str) -> Vec<Statement> {
 
         // gas app.c strips `#` and `//` comments (and `/* */` is rarer in asm).
         if let Some(pos) = text.find('#') {
-            text = &text[..pos].trim_end();
+            text = text[..pos].trim_end();
         }
         if let Some(pos) = text.find("//") {
-            text = &text[..pos].trim_end();
+            text = text[..pos].trim_end();
         }
         // Strip trailing C-style block comment openers on same line.
         if let Some(pos) = text.find("/*") {
-            text = &text[..pos].trim_end();
+            text = text[..pos].trim_end();
         }
         if text.is_empty() {
             continue;
@@ -169,11 +169,14 @@ fn split_operands(s: &str) -> Vec<String> {
 /// `label:` or `label: rest` — returns (label, rest).
 fn split_label(text: &str) -> Option<(&str, &str)> {
     // Don't treat `.L0:` style as non-directive — those are labels.
-    if text.starts_with('.') && text.chars().nth(1).is_some_and(|c| c.is_ascii_alphabetic()
-        && !matches!(
-            text.split_once(':').map(|(a, _)| a),
-            Some(n) if n.starts_with(".L") || n.starts_with(".l")
-        ))
+    if text.starts_with('.')
+        && text.chars().nth(1).is_some_and(|c| {
+            c.is_ascii_alphabetic()
+                && !matches!(
+                    text.split_once(':').map(|(a, _)| a),
+                    Some(n) if n.starts_with(".L") || n.starts_with(".l")
+                )
+        })
     {
         // `.text` etc. are directives, not labels.
         // Local labels like `.Lfoo:` do start with `.L`.
@@ -262,13 +265,15 @@ fn parse_directive(text: &str) -> Option<Directive> {
         "asciz" | "string" | "string8" => Some(Directive::Asciz(parse_string_arg(arg))),
 
         // cons
-        "byte" | "dc.b" => Some(Directive::Byte(parse_int_list(arg).into_iter().map(|v| v as u8).collect())),
-        "word" | "short" | "hword" | "2byte" | "dc.w" => {
-            Some(Directive::Word(parse_int_list(arg).into_iter().map(|v| v as u16).collect()))
-        }
-        "long" | "int" | "4byte" | "dc.l" => {
-            Some(Directive::Long(parse_int_list(arg).into_iter().map(|v| v as u32).collect()))
-        }
+        "byte" | "dc.b" => Some(Directive::Byte(
+            parse_int_list(arg).into_iter().map(|v| v as u8).collect(),
+        )),
+        "word" | "short" | "hword" | "2byte" | "dc.w" => Some(Directive::Word(
+            parse_int_list(arg).into_iter().map(|v| v as u16).collect(),
+        )),
+        "long" | "int" | "4byte" | "dc.l" => Some(Directive::Long(
+            parse_int_list(arg).into_iter().map(|v| v as u32).collect(),
+        )),
         "quad" | "8byte" => Some(Directive::Quad(parse_quad_list(arg))),
 
         "cfi_startproc" | "cfi_endproc" => Some(Directive::CfiProc),
@@ -287,12 +292,32 @@ fn parse_directive(text: &str) -> Option<Directive> {
         }
 
         // gas s_ignore-ish / unsupported — skip silently
-        "file" | "type" | "size" | "ident" | "loc" | "cfi_def_cfa" | "cfi_offset"
-        | "cfi_restore" | "cfi_undefined" | "cfi_remember_state" | "cfi_restore_state"
-        | "cfi_def_cfa_offset" | "cfi_def_cfa_register" | "cfi_escape" | "cfi_sections"
-        | "cfi_personality" | "cfi_lsda" | "cfi_signal_frame" | "cfi_window_save"
-        | "cfi_register" | "cfi_same_value" | "cfi_rel_offset" | "cfi_adjust_cfa_offset"
-        | "cfi_val_offset" | "cfi_val_expression" | "cfi_expression" => None,
+        "file"
+        | "type"
+        | "size"
+        | "ident"
+        | "loc"
+        | "cfi_def_cfa"
+        | "cfi_offset"
+        | "cfi_restore"
+        | "cfi_undefined"
+        | "cfi_remember_state"
+        | "cfi_restore_state"
+        | "cfi_def_cfa_offset"
+        | "cfi_def_cfa_register"
+        | "cfi_escape"
+        | "cfi_sections"
+        | "cfi_personality"
+        | "cfi_lsda"
+        | "cfi_signal_frame"
+        | "cfi_window_save"
+        | "cfi_register"
+        | "cfi_same_value"
+        | "cfi_rel_offset"
+        | "cfi_adjust_cfa_offset"
+        | "cfi_val_offset"
+        | "cfi_val_expression"
+        | "cfi_expression" => None,
 
         _ => None,
     }
@@ -361,9 +386,7 @@ fn parse_string_arg(arg: &str) -> Vec<u8> {
 }
 
 fn parse_int_list(arg: &str) -> Vec<u64> {
-    arg.split(',')
-        .filter_map(|s| parse_int(s.trim()))
-        .collect()
+    arg.split(',').filter_map(|s| parse_int(s.trim())).collect()
 }
 
 /// Like `parse_int_list`, but entries that aren't an integer literal and
@@ -385,12 +408,12 @@ fn parse_quad_list(arg: &str) -> Vec<QuadItem> {
             if tok == "." {
                 return Some(QuadItem::Here(0));
             }
-            if let Some(rest) = tok.strip_prefix('.') {
-                if (rest.starts_with('+') || rest.starts_with('-')) && !rest.starts_with("..") {
-                    if let Some(v) = parse_int(rest) {
-                        return Some(QuadItem::Here(v as i64));
-                    }
-                }
+            if let Some(rest) = tok.strip_prefix('.')
+                && (rest.starts_with('+') || rest.starts_with('-'))
+                && !rest.starts_with("..")
+                && let Some(v) = parse_int(rest)
+            {
+                return Some(QuadItem::Here(v as i64));
             }
             let (sym, addend) = split_symbol_addend(tok);
             let first = sym.chars().next()?;
@@ -457,22 +480,60 @@ mod tests {
             .balign 8
         "#;
         let st = parse_assembly(src);
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Section(SectionKind::Text)))));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Global(n)) if n == "_start")));
-        assert!(st.iter().any(|s| matches!(s, Statement::Label(n) if n == "_start")));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::AlignP2(3)))));
+        assert!(st.iter().any(|s| matches!(
+            s,
+            Statement::Directive(Directive::Section(SectionKind::Text))
+        )));
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Directive(Directive::Global(n)) if n == "_start"))
+        );
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Label(n) if n == "_start"))
+        );
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Directive(Directive::AlignP2(3))))
+        );
         // Plain `.align N` on x86 is a byte count (`s_align_bytes`), not
         // power-of-two — distinct from `.p2align` above.
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::AlignBytes(16)))));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Byte(v)) if v == &[1, 2, 0x10])));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Word(v)) if v == &[0x1234])));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Long(v)) if v == &[0xdeadbeef])));
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Directive(Directive::AlignBytes(16))))
+        );
+        assert!(
+            st.iter().any(
+                |s| matches!(s, Statement::Directive(Directive::Byte(v)) if v == &[1, 2, 0x10])
+            )
+        );
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Directive(Directive::Word(v)) if v == &[0x1234]))
+        );
+        assert!(
+            st.iter().any(
+                |s| matches!(s, Statement::Directive(Directive::Long(v)) if v == &[0xdeadbeef])
+            )
+        );
         assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Quad(v)) if v == &[QuadItem::Int(0x1122334455667788)])));
         assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Quad(v)) if v == &[QuadItem::Sym("ctor_fn".to_string(), 0)])));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Zero(4)))));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Ascii(v)) if v == b"hi")));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::Asciz(v)) if v == b"yo")));
-        assert!(st.iter().any(|s| matches!(s, Statement::Directive(Directive::AlignBytes(8)))));
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Directive(Directive::Zero(4))))
+        );
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Directive(Directive::Ascii(v)) if v == b"hi"))
+        );
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Directive(Directive::Asciz(v)) if v == b"yo"))
+        );
+        assert!(
+            st.iter()
+                .any(|s| matches!(s, Statement::Directive(Directive::AlignBytes(8))))
+        );
     }
 
     #[test]
@@ -508,10 +569,7 @@ mod tests {
         match &st[0] {
             Statement::Instruction { mnemonic, operands } => {
                 assert_eq!(mnemonic, "movl");
-                assert_eq!(
-                    operands,
-                    &["(%rax,%rcx,8)".to_string(), "%edx".to_string()]
-                );
+                assert_eq!(operands, &["(%rax,%rcx,8)".to_string(), "%edx".to_string()]);
             }
             _ => panic!("expected instruction"),
         }

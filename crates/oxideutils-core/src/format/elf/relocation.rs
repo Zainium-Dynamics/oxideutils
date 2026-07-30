@@ -14,7 +14,9 @@ pub fn format_relocs(elf: &Elf<'_>) -> String {
             "\nRelocation section '.rela.dyn' at offset 0x0 contains {} entries:\n",
             elf.dynrelas.len()
         ));
-        s.push_str("  Offset          Info           Type           Sym. Value    Sym. Name + Addend\n");
+        s.push_str(
+            "  Offset          Info           Type           Sym. Value    Sym. Name + Addend\n",
+        );
         for rela in &elf.dynrelas {
             let (sym_name, sym_val) = resolve_sym(elf, rela.r_sym);
             let addend = rela.r_addend.unwrap_or(0);
@@ -56,7 +58,9 @@ pub fn format_relocs(elf: &Elf<'_>) -> String {
             "\nRelocation section '.rela.plt' contains {} entries:\n",
             elf.pltrelocs.len()
         ));
-        s.push_str("  Offset          Info           Type           Sym. Value    Sym. Name + Addend\n");
+        s.push_str(
+            "  Offset          Info           Type           Sym. Value    Sym. Name + Addend\n",
+        );
         for rela in &elf.pltrelocs {
             let (sym_name, sym_val) = resolve_sym(elf, rela.r_sym);
             let addend = rela.r_addend.unwrap_or(0);

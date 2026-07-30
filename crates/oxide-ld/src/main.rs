@@ -10,7 +10,7 @@ mod reloc;
 mod script;
 
 use anyhow::{Context, Result};
-use linker::{link_elf_executable, LinkArg, LinkerConfig};
+use linker::{LinkArg, LinkerConfig, link_elf_executable};
 use std::env;
 use std::fs;
 use std::path::PathBuf;

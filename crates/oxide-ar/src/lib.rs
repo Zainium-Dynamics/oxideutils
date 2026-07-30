@@ -10,9 +10,9 @@
 //! - `oxide-ar`     → `maybe_main` (argv0 may still be ranlib via hardlink)
 //! - `oxide-ranlib` → `ranlib_main` (like is-ranlib.c)
 
-use oxideutils_core::archive_write::{run_ar, ArOperation};
+use oxideutils_core::archive_write::{ArOperation, run_ar};
 use oxideutils_core::cli::aliases::is_ranlib_alias;
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use oxideutils_core::error::{OxideError, Result};
 use oxideutils_core::utils::program_name;
 use std::path::PathBuf;
@@ -187,9 +187,9 @@ fn gnu_style(pos: &[String]) -> Result<()> {
     }
 
     let op = ArOperation::parse_key(key)?;
-    let archive = pos.get(1).ok_or_else(|| {
-        OxideError::tool("ar", "archive file required (see oxide-ar --help)")
-    })?;
+    let archive = pos
+        .get(1)
+        .ok_or_else(|| OxideError::tool("ar", "archive file required (see oxide-ar --help)"))?;
     let rest: Vec<PathBuf> = pos[2..].iter().map(PathBuf::from).collect();
 
     let member_names: Vec<String> = if op.delete || op.extract || op.print {

@@ -13,7 +13,13 @@ pub struct LinkerScript {
     pub entry: Option<String>,
     /// Output section name → list of input section patterns (e.g. `.text`, `.text.*`)
     pub sections: Vec<OutputSection>,
+    /// Reserved: VMA layout is now computed entirely by
+    /// `elfout::assign_vmas` (see the linker.rs rewrite), which doesn't
+    /// consult these — kept on the struct as the intended hook for real
+    /// `-T` script `. = ADDR;` support (Phase 3), not dead weight to delete.
+    #[allow(dead_code)]
     pub text_vma: u64,
+    #[allow(dead_code)]
     pub data_align: u64,
 }
 
@@ -21,7 +27,9 @@ pub struct LinkerScript {
 pub struct OutputSection {
     pub name: String,
     pub patterns: Vec<String>,
-    /// If set, force VMA (else sequential).
+    /// If set, force VMA (else sequential) — same Phase 3 hook as above,
+    /// not consulted by `elfout::assign_vmas` yet.
+    #[allow(dead_code)]
     pub vma: Option<u64>,
 }
 
@@ -166,10 +174,10 @@ impl LinkerScript {
                 });
                 // patterns on same line: *( .text )
                 collect_patterns(rest.1, current_out.as_mut().unwrap());
-                if rest.1.contains('}') {
-                    if let Some(o) = current_out.take() {
-                        collected.push(o);
-                    }
+                if rest.1.contains('}')
+                    && let Some(o) = current_out.take()
+                {
+                    collected.push(o);
                 }
                 continue;
             }
@@ -215,7 +223,7 @@ fn collect_patterns(s: &str, out: &mut OutputSection) {
     // only (not bare `*`, which is also a legitimate glob-suffix character
     // *inside* a pattern like `.text.*`), then split each chunk on
     // whitespace to separate individually-listed patterns.
-    for chunk in s.split(|c: char| c == '(' || c == ')' || c == '{' || c == '}') {
+    for chunk in s.split(['(', ')', '{', '}']) {
         let chunk = chunk.trim().trim_start_matches('*').trim();
         for t in chunk.split_whitespace() {
             let t = t.trim_end_matches(',');
@@ -233,8 +241,7 @@ fn section_pattern_match(pat: &str, name: &str) -> bool {
     if let Some(prefix) = pat.strip_suffix(".*") {
         return name.starts_with(prefix);
     }
-    if pat.ends_with('*') {
-        let prefix = &pat[..pat.len() - 1];
+    if let Some(prefix) = pat.strip_suffix('*') {
         return name.starts_with(prefix);
     }
     false
@@ -257,13 +264,19 @@ mod tests {
         );
         assert_eq!(s.entry.as_deref(), Some("main"));
         assert!(s.sections.iter().any(|o| o.name == ".text"));
-        assert_eq!(s.map_input_section(".text.startup").as_deref(), Some(".text"));
+        assert_eq!(
+            s.map_input_section(".text.startup").as_deref(),
+            Some(".text")
+        );
     }
 
     #[test]
     fn default_maps_standard() {
         let s = LinkerScript::default();
         assert_eq!(s.map_input_section(".text").as_deref(), Some(".text"));
-        assert_eq!(s.map_input_section(".rodata.str1.1").as_deref(), Some(".rodata"));
+        assert_eq!(
+            s.map_input_section(".rodata.str1.1").as_deref(),
+            Some(".rodata")
+        );
     }
 }

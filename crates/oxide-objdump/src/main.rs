@@ -7,16 +7,16 @@
 
 use clap::Parser;
 use object::{Object, ObjectSection};
-use oxideutils_core::archive::{is_archive, OxideArchive};
+use object::{ObjectSymbol, RelocationKind, RelocationTarget};
+use oxideutils_core::archive::{OxideArchive, is_archive};
 use oxideutils_core::cli::config::RuntimeConfig;
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use oxideutils_core::cli::utils::Status;
 use oxideutils_core::error::{OxideError, Result};
 use oxideutils_core::format::elf::ElfFile;
 use oxideutils_core::format::object::OxideObject;
-use oxideutils_core::symbols::{list_symbols, SymbolFilter};
+use oxideutils_core::symbols::{SymbolFilter, list_symbols};
 use oxideutils_core::utils::{hex_dump, map_file, parse_address, read_file};
-use object::{ObjectSymbol, RelocationKind, RelocationTarget};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -222,10 +222,7 @@ fn process_archive(path: &Path, data: &[u8], args: &Args, cfg: &RuntimeConfig) -
     if args.archive_headers || args.all_headers {
         println!("In archive {}:", path.display());
         for m in &arch.members {
-            println!(
-                "  {} offset={} size={}",
-                m.name, m.offset, m.size
-            );
+            println!("  {} offset={} size={}", m.name, m.offset, m.size);
         }
     }
     for m in &arch.members {
@@ -280,7 +277,11 @@ fn process_object(path: &Path, data: &[u8], args: &Args, cfg: &RuntimeConfig) ->
     }
 
     if let Some(sec) = &args.sframe {
-        let name = if sec.is_empty() { ".sframe" } else { sec.as_str() };
+        let name = if sec.is_empty() {
+            ".sframe"
+        } else {
+            sec.as_str()
+        };
         if let Ok(elf) = ElfFile::parse(path.display(), data) {
             print!("{}", elf.format_sframe(Some(name)));
         } else {
@@ -406,14 +407,10 @@ fn dump_contents(obj: &OxideObject<'_>, args: &Args) -> Result<()> {
 
 fn dump_disassembly(obj: &OxideObject<'_>, args: &Args, cfg: &RuntimeConfig) -> Result<()> {
     use object::ObjectSymbol;
-    use oxideutils_core::disasm::{format_disassembly_with_labels, DisasmOptions};
+    use oxideutils_core::disasm::{DisasmOptions, format_disassembly_with_labels};
 
     let all = args.disassemble_all;
-    let only_sym = args
-        .disassemble
-        .as_ref()
-        .filter(|s| !s.is_empty())
-        .cloned();
+    let only_sym = args.disassemble.as_ref().filter(|s| !s.is_empty()).cloned();
 
     let opts = DisasmOptions {
         show_raw_insn: cfg.toml.disasm.show_raw_insn,
@@ -448,10 +445,7 @@ fn dump_disassembly(obj: &OxideObject<'_>, args: &Args, cfg: &RuntimeConfig) -> 
         let mut found = None;
         for (i, (addr, n)) in syms.iter().enumerate() {
             if n == name || n.strip_prefix('_') == Some(name.as_str()) {
-                let end = syms
-                    .get(i + 1)
-                    .map(|(a, _)| *a)
-                    .unwrap_or(u64::MAX);
+                let end = syms.get(i + 1).map(|(a, _)| *a).unwrap_or(u64::MAX);
                 found = Some((*addr, end));
                 break;
             }

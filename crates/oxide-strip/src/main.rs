@@ -1,10 +1,10 @@
 //! oxide-strip — discard symbols from object files (GNU strip compatible subset).
 
 use clap::Parser;
-use oxideutils_core::cli::help::{self, print_version, VERSION};
+use oxideutils_core::cli::help::{self, VERSION, print_version};
 use oxideutils_core::cli::utils::Status;
 use oxideutils_core::error::{OxideError, Result};
-use oxideutils_core::strip::{strip_file, StripOptions};
+use oxideutils_core::strip::{StripOptions, strip_file};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 

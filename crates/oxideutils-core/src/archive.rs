@@ -35,8 +35,7 @@ impl<'data> OxideArchive<'data> {
         let kind = archive.kind();
         let mut members = Vec::new();
         for member in archive.members() {
-            let member =
-                member.map_err(|e| OxideError::format(path.clone(), e.to_string()))?;
+            let member = member.map_err(|e| OxideError::format(path.clone(), e.to_string()))?;
             let name = String::from_utf8_lossy(member.name()).into_owned();
             let offset = member.file_range().0;
             let size = member.file_range().1;
