@@ -1,0 +1,23 @@
+[package]
+name = "oxide-as"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-as — Pure-Rust GNU Assembler (gas) replacement for ZainiumOS"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-as"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+object.workspace = true
+iced-x86 = { version = "1.21", default-features = false, features = ["std", "decoder", "encoder", "gas"] }
+
+[dev-dependencies]
+tempfile = "3"
+

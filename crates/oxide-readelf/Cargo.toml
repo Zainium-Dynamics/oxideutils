@@ -1,0 +1,16 @@
+[package]
+name = "oxide-readelf"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-readelf — Rust rewrite of GNU readelf"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-readelf"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true

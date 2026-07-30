@@ -1,0 +1,16 @@
+[package]
+name = "oxide-strip"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-strip — Rust rewrite of GNU strip"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-strip"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true

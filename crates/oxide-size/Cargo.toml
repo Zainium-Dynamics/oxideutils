@@ -1,0 +1,17 @@
+[package]
+name = "oxide-size"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-size — Rust rewrite of GNU size"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-size"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true
+object.workspace = true

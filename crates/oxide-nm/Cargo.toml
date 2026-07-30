@@ -1,0 +1,16 @@
+[package]
+name = "oxide-nm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-nm — Rust rewrite of GNU nm"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-nm"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true

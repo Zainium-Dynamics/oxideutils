@@ -1,0 +1,124 @@
+#  OxideUtils configuration — Zainium Dynamics
+#  https://zainiumdynamics.tech
+#
+#  HOW TO BUILD (no Makefile):
+#    1. Edit this file — set true / false as you like
+#    2. cargo build --release
+#    3. Binaries land in target/release/
+#    4. See the plan written at: target/oxideutils-build-plan.txt
+#
+#  Runtime tools also read this file (CWD / OXIDEUTILS_CONFIG / ~/.config/…).
+
+
+# ─── BUILD (compile-time: read by build.rs on `cargo build`) ───────────────
+
+[build]
+# true  = one binary: oxideutils <tool> …
+#         separate oxide-objdump / oxide-nm / … bins exit with a hint
+# false = each tool is its own binary (oxide-objdump, oxide-nm, …)
+standalone = false
+
+# Link style (pick one style — if static=true, dynamic is forced off)
+# Full static binaries: also use --target *-linux-musl
+static  = false
+dynamic = true
+
+# If true, print a note to also build the no_std kernel core:
+#   cargo build -p oxideutils-core --release --no-default-features \
+#     --features alloc,disasm,kernel --target-dir target-nostd
+kernel = false
+
+# Informational (release profile LTO is already in Cargo.toml)
+lto = true
+
+# ─── CARGO FEATURES (documented here; host default features in Cargo.toml) ─
+# These toggles are recorded in the build plan and rustc-cfg.
+# Change Cargo features with: cargo build --no-default-features --features '…'
+# when you need a custom feature set beyond the defaults.
+
+[features]
+disasm         = true   # x86/x86_64 (iced-x86)
+disasm_aarch64 = true   # AArch64 (bad64) — host tools
+dwarf          = true   # addr2line / gimli
+color          = true
+json           = true
+
+# ─── WHICH TOOLS TO SHIP 
+# false = binary built but exits: “disabled by oxideutils.toml”
+# (when standalone=true, all separate tool bins are treated as disabled)
+
+[tools]
+objdump   = true
+nm        = true
+readelf   = true
+size      = true
+strings   = true
+# ar also builds/gates oxide-ranlib (same binary, GNU convention: ranlib ==
+# ar -s under a different argv0) — there's no separate `ranlib` key because
+# there's no separate build unit to gate; toggling `ar` toggles both.
+ar        = true
+strip     = true
+objcopy   = true
+addr2line = true
+cxxfilt   = true        # oxide-c++filt (C++/Rust symbol demangler)
+elfedit   = true        # oxide-elfedit (patch ELF header fields in place)
+multicall = true        # the `oxideutils` dispatcher binary
+
+# ─── RUNTIME DEFAULTS (true / false)
+[oxideutils]
+gnu_compatible    = true
+json              = false
+demangle          = false
+wide              = false
+parallel          = false
+continue_on_error = true
+verbose           = false
+quiet             = false
+
+[color]
+enabled = true
+auto    = true
+always  = false
+
+[disasm]
+show_raw_insn       = true
+disassemble_zeroes  = false
+gas_syntax          = true
+uppercase_hex       = false
+
+[objdump]
+demangle = false
+wide = false
+allow_disassemble_only = true
+
+[nm]
+demangle = false
+numeric_sort = false
+size_sort = false
+reverse = false
+print_size = false
+print_file_name = false
+extern_only = false
+undefined_only = false
+defined_only = false
+
+[readelf]
+all_by_default = false
+show_notes = true
+
+[mutate]
+strip_all_default = true
+safe_inplace = true
+preserve_dates = false
+
+[addr2line]
+demangle = false
+functions = false
+pretty = false
+basenames = false
+inlines = false
+show_addresses = false
+
+[log]
+verbose = false
+quiet = false

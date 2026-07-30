@@ -1,0 +1,14 @@
+# OxideUtils — cargo aliases (no Makefile)
+#
+# Primary workflow:
+#   1. Edit oxideutils.toml  (true / false)
+#   2. cargo build --release
+#
+# Optional aliases:
+
+[alias]
+# Same as: cargo build --workspace
+oxide = "build --workspace"
+
+# Kernel / no_std core only (separate target-dir so std is not unified in)
+oxide-kernel = "build -p oxideutils-core --no-default-features --features alloc,disasm,kernel --target-dir target-nostd"

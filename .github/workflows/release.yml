@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --workspace --release
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/release/oxide-objdump
+            target/release/oxide-nm
+            target/release/oxide-readelf
+            target/release/oxide-size
+            target/release/oxide-ar
+            target/release/oxide-strings
+            target/release/oxideutils

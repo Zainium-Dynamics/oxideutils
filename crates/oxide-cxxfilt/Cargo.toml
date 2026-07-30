@@ -1,0 +1,21 @@
+[package]
+name = "oxide-cxxfilt"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-c++filt — Rust rewrite of GNU c++filt"
+repository.workspace = true
+
+# Cargo/rustc reject `+` in a crate name, so the buildable target is the
+# ASCII-safe `oxide-cxxfilt` — installers symlink `oxide-c++filt` to it to
+# match GNU's actual binary name on disk (see scripts/build-zainium.sh).
+[[bin]]
+name = "oxide-cxxfilt"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true
+rustc-demangle.workspace = true
+cpp_demangle.workspace = true

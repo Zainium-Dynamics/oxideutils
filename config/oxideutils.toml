@@ -1,0 +1,48 @@
+# Compact project config — see ../oxideutils.toml for full comments.
+# Build: edit me, then  cargo build --release
+
+[build]
+standalone = false
+static = false
+dynamic = true
+kernel = false
+
+[features]
+disasm = true
+disasm_aarch64 = true
+dwarf = true
+color = true
+json = true
+
+[tools]
+objdump = true
+nm = true
+readelf = true
+size = true
+strings = true
+ar = true
+strip = true
+objcopy = true
+addr2line = true
+cxxfilt = true
+elfedit = true
+multicall = true
+
+[oxideutils]
+gnu_compatible = true
+json = false
+demangle = false
+continue_on_error = true
+verbose = false
+quiet = false
+
+[color]
+enabled = true
+auto = true
+always = false
+
+[disasm]
+show_raw_insn = true
+disassemble_zeroes = false
+gas_syntax = true
+uppercase_hex = false

@@ -1,0 +1,29 @@
+[package]
+name = "oxide-ar"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-ar — Rust rewrite of GNU ar (also provides oxide-ranlib)"
+repository.workspace = true
+
+# Separate entry points match binutils is-ranlib.c / not-ranlib.c layout
+# (shared logic lives in lib.rs — no dual path=main.rs Cargo warning).
+[[bin]]
+name = "oxide-ar"
+path = "src/bin/oxide-ar.rs"
+
+[[bin]]
+name = "oxide-ranlib"
+path = "src/bin/oxide-ranlib.rs"
+
+[lib]
+name = "oxide_ar"
+path = "src/lib.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,22 @@
+[package]
+name = "oxide-ld"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-ld — Pure-Rust GNU Linker (ld) replacement for ZainiumOS"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-ld"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+object.workspace = true
+goblin.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

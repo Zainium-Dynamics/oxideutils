@@ -1,0 +1,112 @@
+[package]
+name = "oxideutils-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "Shared core for OxideUtils (Zainium Dynamics) — std + no_std dual mode"
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+byteorder = { version = "1", default-features = false }
+log = { version = "0.4", default-features = false }
+object = { version = "0.36", default-features = false, features = [
+    "read",
+    "elf",
+    "pe",
+    "macho",
+    "wasm",
+    "archive",
+    "unaligned",
+] }
+goblin = { version = "0.9", default-features = false, features = [
+    "alloc",
+    "elf32",
+    "elf64",
+    "endian_fd",
+    "archive",
+] }
+rustc-demangle = { version = "0.1", default-features = false }
+thiserror = { version = "2", default-features = false }
+
+iced-x86 = { version = "1.21", optional = true, default-features = false, features = [
+    "std",
+    "decoder",
+    "gas",
+] }
+# Pure Rust AArch64 decoder (no_std) — Phase E
+bad64 = { version = "0.12", optional = true, default-features = false }
+
+anyhow = { version = "1", optional = true }
+clap = { version = "4", optional = true, features = ["derive", "env", "wrap_help", "color"] }
+memmap2 = { version = "0.9", optional = true }
+colored = { version = "2", optional = true }
+serde = { version = "1", optional = true, features = ["derive"] }
+serde_json = { version = "1", optional = true }
+toml = { version = "0.8", optional = true }
+indexmap = { version = "2", optional = true }
+once_cell = { version = "1", optional = true }
+cpp_demangle = { version = "0.4", optional = true }
+addr2line = { version = "0.24", optional = true }
+gimli = { version = "0.31", optional = true }
+
+[features]
+# Host tools: x86 + AArch64 disasm + DWARF
+default = ["std", "color", "json", "disasm", "disasm-aarch64", "dwarf"]
+
+# Userland / host tools (Linux, CI, developers)
+std = [
+    "alloc",
+    "object/std",
+    "object/compression",
+    "object/write",
+    "goblin/std",
+    "goblin/pe32",
+    "goblin/pe64",
+    "goblin/mach32",
+    "goblin/mach64",
+    "byteorder/std",
+    "log/std",
+    "dep:anyhow",
+    "dep:clap",
+    "dep:memmap2",
+    "dep:colored",
+    "dep:serde",
+    "dep:serde_json",
+    "dep:toml",
+    "dep:indexmap",
+    "dep:once_cell",
+    "dep:cpp_demangle",
+    "thiserror/std",
+]
+
+# Freestanding / kernel: enable explicitly with --features alloc
+alloc = []
+
+color = ["std"]
+json = ["std", "dep:serde", "dep:serde_json"]
+# x86 / x86_64 via iced-x86 (no_std friendly)
+disasm = ["dep:iced-x86"]
+# AArch64 via bad64 (pure Rust decode; bindgen build-dep — prefer host `std` tools)
+disasm-aarch64 = ["dep:bad64"]
+dwarf = ["std", "dep:addr2line", "dep:gimli"]
+
+# Kernel convenience: x86 disasm only (avoids bad64-sys bindgen on freestanding)
+kernel = ["alloc", "disasm"]
+
+[[bin]]
+name = "oxideutils"
+path = "src/bin/oxideutils.rs"
+required-features = ["std"]
+
+[dev-dependencies]
+tempfile = "3"
+object = { version = "0.36", default-features = false, features = [
+    "read",
+    "std",
+    "elf",
+    "archive",
+] }

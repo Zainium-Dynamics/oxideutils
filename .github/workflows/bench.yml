@@ -1,0 +1,24 @@
+name: Bench
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release -p oxide-objdump -p oxide-nm -p oxide-readelf
+      - name: Smoke timing vs GNU (if present)
+        run: |
+          set -e
+          BIN=/bin/ls
+          echo "=== oxide-objdump -h ==="
+          time ./target/release/oxide-objdump -h "$BIN" >/dev/null
+          if command -v objdump >/dev/null; then
+            echo "=== gnu objdump -h ==="
+            time objdump -h "$BIN" >/dev/null
+          fi

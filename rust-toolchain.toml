@@ -1,0 +1,13 @@
+# OxideUtils — Zainium Dynamics
+#
+# MSRV (minimum): 1.85  →  see Cargo.toml `rust-version = "1.85"`
+# Edition: 2024
+#
+# Channel: pin a modern toolchain ≥ 1.85.
+# Bump this when you upgrade (e.g. 1.94, 1.95, …).
+# Install:  rustup toolchain install 1.93
+#
+[toolchain]
+channel = "1.93"
+components = ["rustfmt", "clippy", "rustc", "cargo"]
+profile = "minimal"

@@ -1,0 +1,16 @@
+[package]
+name = "oxide-addr2line"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-addr2line — Rust rewrite of GNU addr2line"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-addr2line"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true

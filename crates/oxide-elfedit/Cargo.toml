@@ -1,0 +1,19 @@
+[package]
+name = "oxide-elfedit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-elfedit — Rust rewrite of GNU elfedit"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-elfedit"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

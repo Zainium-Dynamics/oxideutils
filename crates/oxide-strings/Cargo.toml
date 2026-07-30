@@ -1,0 +1,16 @@
+[package]
+name = "oxide-strings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "oxide-strings — Rust rewrite of GNU strings"
+repository.workspace = true
+
+[[bin]]
+name = "oxide-strings"
+path = "src/main.rs"
+
+[dependencies]
+oxideutils-core.workspace = true
+clap.workspace = true
