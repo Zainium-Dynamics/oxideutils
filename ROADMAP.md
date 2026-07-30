@@ -4,7 +4,7 @@
 **Contact:** alizain@zainiumdynamics.tech · **Web:** https://zainiumdynamics.tech  
 
 **Behavioural reference:** GNU binutils **2.46.1**  
-(`packages/binutils-2.46.1` on the Zainium drive — QA only, not linked)
+(QA only, not linked)
 
 Each phase ships reviewable binaries and tests.  
 Full audit: [docs/AUDIT-REPORT-BINUTILS-2.46.1.md](docs/AUDIT-REPORT-BINUTILS-2.46.1.md)
@@ -16,13 +16,13 @@ Full audit: [docs/AUDIT-REPORT-BINUTILS-2.46.1.md](docs/AUDIT-REPORT-BINUTILS-2.
 | Phase | Focus | Deliverables | Status |
 |-------|--------|--------------|--------|
 | **1** | Foundation | Workspace, `oxideutils-core`, CI, CLI, dual `std`/`no_std` | **Done (0.1)** |
-| **2** | ELF + objdump MVP | Headers, sections, symbols, hex, archives | **Done** |
+| **2** | ELF + objdump MVP | Headers, sections, symbols, hex, archives | **Partial Done** |
 | **3** | Disassembly | iced-x86 x86_64; AArch64 next | **Partial** (x86/x64 live) |
 | **4** | nm + size | Flag matrix, formats | **Done** (nm `-S` needs GNU align) |
 | **5** | readelf deep | Notes done; versioning / compressed / SFrame / GOT | **Partial** |
 | **6** | ar complete | Create/replace/delete, thin, ranlib | **Partial** (t/p/x only) |
 | **7** | strip + objcopy | ELF mutation paths | **Partial** — **high risk until B** |
-| **8** | addr2line | gimli DWARF, inlines, demangle | **Done** (subset) |
+| **8** | addr2line | gimli DWARF, inlines, demangle | **Partial** (subset) |
 | **9** | PE / Mach-O / Wasm | Deeper host parity | Planned |
 | **10** | UX + parallel | JSON, colour, rayon multi-file | Planned |
 | **11** | Distro + matrix | Man pages, packages, GNU differential suite | Planned |
