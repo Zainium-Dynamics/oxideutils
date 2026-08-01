@@ -2,7 +2,7 @@
 
 **Role lens:** Senior Rust engineer · GNU binutils principal architecture · GNU toolchain developer  
 **Product:** OxideUtils 0.1.0 (Zainium Dynamics)  
-**Reference tree:** `/run/media/alizain/ZAINIUM_DRIVE/packages/binutils-2.46.1` (GNU binutils **2.46.1**)  
+**Reference tree:**  (GNU binutils **2.46**)  
 **Audit date:** 2026-07-15  
 **Scope:** All workspace crates, architecture, risk, GNU comparison, next implementation roadmap  
 
