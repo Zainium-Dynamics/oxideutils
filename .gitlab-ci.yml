@@ -3,13 +3,26 @@ image: rust:latest
 stages:
   - test
   - build
+  - fuzz
   - bench
   - release
 
 variables:
   CARGO_TERM_COLOR: always
+  DEBIAN_FRONTEND: noninteractive
+  CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .cargo/registry/index/
+    - .cargo/registry/cache/
+    - .cargo/git/db/
+    - target/
 
 before_script:
+  # C toolchain, LLVM dev tools, aur Clang (fuzzing and bindgen prerequisites)
+  - apt-get update -qq && apt-get install -y -qq build-essential clang llvm binutils > /dev/null
   - rustc --version && cargo --version
 
 test:
@@ -17,7 +30,7 @@ test:
   script:
     - rustup component add rustfmt clippy
     - cargo fmt --all -- --check
-    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo clippy --workspace --all-targets --no-deps -- -D warnings
     - cargo test --workspace
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
@@ -26,6 +39,7 @@ test:
 build:
   stage: build
   script:
+    - rustup target add x86_64-unknown-none || true
     - bash scripts/build-all.sh
     - cargo build --workspace --release
     - cargo build -p oxideutils-core --release --no-default-features --features "alloc,disasm,kernel" --target-dir target-nostd
@@ -37,9 +51,36 @@ build:
     - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
-# Weekly speed smoke-test vs GNU binutils (if present on the runner).
-# Needs a Schedule configured in GitLab → CI/CD → Schedules to actually
-# fire on a cron; also runnable manually via "Run pipeline" (web source).
+# Fuzzing Stage (cargo-fuzz integration)
+fuzz:
+  stage: fuzz
+  script:
+    # Nightly toolchain install for libFuzzer/sanitizer support
+    - rustup toolchain install nightly --default
+    - cargo +nightly install cargo-fuzz || true
+    # Run fuzzing targets for a set duration per target (e.g., 60 seconds each in CI)
+    - |
+      if [ -d "fuzz" ]; then
+        echo "=== Running Cargo Fuzz Targets ==="
+        for target in $(cargo fuzz list); do
+          echo "Fuzzing target: $target"
+          cargo +nightly fuzz run "$target" -- -max_total_time=60 -runs=100000 || exit 1
+        done
+      else
+        echo "No fuzz directory found, skipping fuzzing runner."
+      fi
+  artifacts:
+    when: on_failure
+    paths:
+      - fuzz/artifacts/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+
 bench:
   stage: bench
   script:
