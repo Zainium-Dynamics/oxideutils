@@ -38,7 +38,7 @@ version = "0.1.0"
 # Edition 2024 requires rustc ≥ 1.85 (MSRV). Prefer latest stable in practice.
 edition = "2024"
 license = "GPL-3.0-only"
-repository = "https://github.com/zainium-dynamics/oxideutils"
+repository = "https://gitlab.com/zainium-dynamics/oxideutils"
 homepage = "https://zainiumdynamics.tech"
 authors = ["Zainium Dynamics <alizain@zainiumdynamics.tech>"]
 rust-version = "1.85"
