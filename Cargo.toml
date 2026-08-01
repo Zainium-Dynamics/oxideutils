@@ -40,7 +40,7 @@ rust-version = "1.85"
 
 license = "GPL-3.0-only"
 
-authors = "Zainium Dynamics <alizain@zainiumdynamics.tech>"
+authors = ["Zainium Dynamics <alizain@zainiumdynamics.tech>"]
 
 description = "oxideutils - A modern Rust implementation of the GNU Binutils toolchain."
 
