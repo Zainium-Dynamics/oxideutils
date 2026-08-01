@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
+
 members = [
     "crates/oxideutils-core",
     "crates/oxide-objdump",
@@ -16,77 +17,162 @@ members = [
     "crates/oxide-as",
     "crates/oxide-ld",
 ]
+
 default-members = [
     "crates/oxideutils-core",
     "crates/oxide-objdump",
     "crates/oxide-nm",
     "crates/oxide-readelf",
-    "crates/oxide-size",
-    "crates/oxide-strings",
-    "crates/oxide-ar",
     "crates/oxide-strip",
     "crates/oxide-objcopy",
+    "crates/oxide-ar",
+    "crates/oxide-size",
     "crates/oxide-addr2line",
+    "crates/oxide-strings",
     "crates/oxide-cxxfilt",
     "crates/oxide-elfedit",
-    "crates/oxide-as",
-    "crates/oxide-ld",
 ]
 
 [workspace.package]
 version = "0.1.0"
-# Edition 2024 requires rustc ≥ 1.85 (MSRV). Prefer latest stable in practice.
 edition = "2024"
-license = "GPL-3.0-only"
-repository = "https://gitlab.com/zainium-dynamics/oxideutils"
-homepage = "https://zainiumdynamics.tech"
-authors = ["Zainium Dynamics <alizain@zainiumdynamics.tech>"]
 rust-version = "1.85"
-keywords = ["binutils", "elf", "objdump", "toolchain", "rust", "zainium"]
-categories = ["command-line-utilities", "development-tools", "parser-implementations"]
+
+license = "GPL-3.0-only"
+
+authors = "Zainium Dynamics <alizain@zainiumdynamics.tech>"
+
+description = "oxideutils - A modern Rust implementation of the GNU Binutils toolchain."
+
+homepage = "https://zainiumdynamics.tech"
+repository = "https://gitlab.com/zainium-dynamics/oxideutils"
+
+keywords = [
+    "binutils",
+    "elf",
+    "linker",
+    "assembler",
+    "toolchain",
+]
+
+categories = [
+    "command-line-utilities",
+    "development-tools",
+    "parser-implementations",
+]
 
 [workspace.dependencies]
+
 oxideutils-core = { path = "crates/oxideutils-core", version = "0.1.0" }
+
+clap = { version = "4.6", features = [
+    "derive",
+    "env",
+    "wrap_help",
+    "color",
+] }
+
+clap_complete = "4.6"
+clap_mangen = "0.2"
+
+
 anyhow = "1"
-clap = { version = "4", features = ["derive", "env", "wrap_help", "color"] }
 thiserror = "2"
+
+
 object = { version = "0.36", default-features = false, features = [
     "read",
     "write",
     "std",
-    "elf",
-    "pe",
-    "macho",
-    "wasm",
     "archive",
     "compression",
+    "elf",
+    "macho",
+    "pe",
+    "wasm",
     "unaligned",
 ] }
-memmap2 = "0.9"
-goblin = "0.9"
+
 gimli = "0.31"
 addr2line = "0.24"
+
+
+memmap2 = "0.9"
+
+
+iced-x86 = { version = "1.21", default-features = false, features = [
+    "std",
+    "decoder",
+    "encoder",
+    "gas",
+] }
+
 capstone = "0.12"
-iced-x86 = { version = "1.21", default-features = false, features = ["std", "decoder", "encoder", "gas"] }
-colored = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-rayon = "1"
-byteorder = "1"
-indexmap = "2"
-once_cell = "1"
-regex = "1"
-walkdir = "2"
-log = "0.4"
-env_logger = "0.11"
+
+
 rustc-demangle = "0.1"
 cpp_demangle = "0.4"
 
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+
+byteorder = "1"
+indexmap = "2"
+once_cell = "1"
+
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+
+colored = "2"
+
+
+[workspace.lints.rust]
+unsafe_code = "warn"
+missing_docs = "warn"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+all = "warn"
+cargo = "warn"
+nursery = "allow"
+pedantic = "allow"
+
+
+# Release Profile
+
+
 [profile.release]
+opt-level = 3
 lto = true
 codegen-units = 1
 panic = "abort"
 strip = "symbols"
+debug = false
+incremental = false
+
+# Dev Profile
 
 [profile.dev]
 opt-level = 1
+debug = true
+incremental = true
+
+
+# Bench Profile
+##################################################
+
+[profile.bench]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+##################################################
+# Docs
+##################################################
+
+[profile.doc]
+debug = false
