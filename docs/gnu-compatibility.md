@@ -21,7 +21,7 @@ OxideUtils is **not** a GNU package.
 
 ## Reference version
 
-- **Primary reference:** GNU binutils **2.46.1** (e.g. `packages/binutils-2.46.1` on the Zainium drive for QA).  
+- **Primary reference:** GNU binutils **2.46**.  
 - We do **not** compile or link `libbfd` / `libopcodes` from that tree into OxideUtils.
 
 ---
