@@ -39,9 +39,6 @@ cargo check --workspace
 - Root overview: `README.md`  
 - Update docs when you change CLI flags or public core API  
 
-## Code of Conduct
-
-See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Patch checklist
 
