@@ -5,10 +5,11 @@ follows [Keep a Changelog](https://keepachangelog.com/). Behavioural
 reference is GNU binutils **2.46.1** (QA comparison only — no GNU code
 is linked; OxideUtils is not a GNU project).
 
-## [0.1.0] - 2026-08-13
+## [0.1.0-alpha] - 2026-08-13
 
-Initial public release. A working Rust binutils-suite foundation, not a
-drop-in GNU replacement yet — see "Known gaps" below.
+Initial public release, tagged as an **alpha**: a working Rust
+binutils-suite foundation, not a drop-in GNU replacement yet — see
+"Known gaps" below.
 
 ### Added
 
