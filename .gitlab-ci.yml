@@ -5,6 +5,7 @@ stages:
   - build
   - fuzz
   - bench
+  - release-build
   - release
 
 variables:
@@ -105,11 +106,12 @@ bench:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
 
-release:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  before_script:
-    - apk add --no-cache git zstd coreutils
+# Builds the source archive + checksum and exports the computed package
+# name via a dotenv artifact. The `release:` keyword in a job can only see
+# variables from a dotenv artifact produced by an *upstream* job pulled in
+# via `needs:` — not one produced by its own `script:` in the same job.
+release-build:
+  stage: release-build
   script:
     - mkdir -p dist
     - VERSION="${CI_COMMIT_TAG#v}"
@@ -124,6 +126,23 @@ release:
     expire_in: never
     reports:
       dotenv: release.env
+  rules:
+    # Matches plain releases (v0.1.0) and pre-releases (v0.1.0-alpha, v0.1.0-rc.1, ...)
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$/'
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - job: release-build
+      artifacts: true
+  script:
+    - echo "Publishing release for $PACKAGE"
+  artifacts:
+    name: "oxideutile-$CI_COMMIT_TAG"
+    paths:
+      - dist/*
+    expire_in: never
   release:
     tag_name: '$CI_COMMIT_TAG'
     name: 'oxideutile-$CI_COMMIT_TAG'
@@ -144,5 +163,4 @@ release:
           url: '$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/dist/$PACKAGE.sha256'
           filepath: '/$PACKAGE.sha256'
   rules:
-    # Matches plain releases (v0.1.0) and pre-releases (v0.1.0-alpha, v0.1.0-rc.1, ...)
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$/'
