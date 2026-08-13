@@ -1,4 +1,4 @@
-image: rust:latest
+image: rust:1.93
 
 stages:
   - test
@@ -19,11 +19,19 @@ cache:
     - .cargo/registry/cache/
     - .cargo/git/db/
     - target/
+workflow:
+  rules:
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
 
 before_script:
-  # C toolchain, LLVM dev tools, and Clang + libclang for bindgen-based crates.
-  - apt-get update -qq && apt-get install -y -qq build-essential clang libclang-dev llvm binutils > /dev/null
+  # C toolchain + Clang/libclang + zstd for bindgen, fuzzing, and release archives.
+  - apt-get update -qq && apt-get install -y -qq build-essential clang libclang-dev llvm binutils zstd > /dev/null
   - rustc --version && cargo --version
+  - cargo fetch --locked || cargo fetch
 
 test:
   stage: test
@@ -100,16 +108,25 @@ bench:
 release:
   stage: release
   script:
-    - cargo build --workspace --release
+    - mkdir -p dist
+    - VERSION="${CI_COMMIT_TAG#v}"
+    - PACKAGE="oxideutile-${VERSION}"
+    - git archive --format=tar --prefix="${PACKAGE}/" "$CI_COMMIT_SHA" | zstd -19 -T0 -o "dist/${PACKAGE}.tar.zst"
+    - sha256sum "dist/${PACKAGE}.tar.zst" > "dist/${PACKAGE}.sha256"
   artifacts:
-    name: "oxideutils-$CI_COMMIT_TAG"
+    name: "oxideutile-$CI_COMMIT_TAG"
     paths:
-      - target/release/oxide-objdump
-      - target/release/oxide-nm
-      - target/release/oxide-readelf
-      - target/release/oxide-size
-      - target/release/oxide-ar
-      - target/release/oxide-strings
-      - target/release/oxideutils
+      - dist/*
+  release:
+    tag_name: '$CI_COMMIT_TAG'
+    name: 'oxideutile-$CI_COMMIT_TAG'
+    description: |
+      Automated workspace source release for $CI_COMMIT_TAG.
+
+      - Built from commit: $CI_COMMIT_SHA
+      - Artifact: dist/oxideutile-<version>.tar.zst
+      - Checksum: dist/oxideutile-<version>.sha256
+      - Archive excludes target/ because it is generated via git archive.
+      - Changelog: CHANGELOG.md
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^v/'
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'
