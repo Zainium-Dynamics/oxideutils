@@ -113,10 +113,14 @@ release:
     - PACKAGE="oxideutile-${VERSION}"
     - git archive --format=tar --prefix="${PACKAGE}/" "$CI_COMMIT_SHA" | zstd -19 -T0 -o "dist/${PACKAGE}.tar.zst"
     - sha256sum "dist/${PACKAGE}.tar.zst" > "dist/${PACKAGE}.sha256"
+    - echo "PACKAGE=${PACKAGE}" >> release.env
   artifacts:
     name: "oxideutile-$CI_COMMIT_TAG"
     paths:
       - dist/*
+    expire_in: never
+    reports:
+      dotenv: release.env
   release:
     tag_name: '$CI_COMMIT_TAG'
     name: 'oxideutile-$CI_COMMIT_TAG'
@@ -124,9 +128,18 @@ release:
       Automated workspace source release for $CI_COMMIT_TAG.
 
       - Built from commit: $CI_COMMIT_SHA
-      - Artifact: dist/oxideutile-<version>.tar.zst
-      - Checksum: dist/oxideutile-<version>.sha256
+      - Artifact: dist/$PACKAGE.tar.zst
+      - Checksum: dist/$PACKAGE.sha256
       - Archive excludes target/ because it is generated via git archive.
       - Changelog: CHANGELOG.md
+    assets:
+      links:
+        - name: '$PACKAGE.tar.zst'
+          url: '$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/dist/$PACKAGE.tar.zst'
+          filepath: '/$PACKAGE.tar.zst'
+        - name: '$PACKAGE.sha256'
+          url: '$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/dist/$PACKAGE.sha256'
+          filepath: '/$PACKAGE.sha256'
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'
+    # Matches plain releases (v0.1.0) and pre-releases (v0.1.0-alpha, v0.1.0-rc.1, ...)
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$/'
