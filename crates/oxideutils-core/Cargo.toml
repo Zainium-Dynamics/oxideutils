@@ -13,7 +13,7 @@ categories.workspace = true
 [dependencies]
 byteorder = { version = "1", default-features = false }
 log = { version = "0.4", default-features = false }
-object = { version = "0.36", default-features = false, features = [
+object = { version = "0.40", default-features = false, features = [
     "read",
     "elf",
     "pe",
@@ -104,7 +104,7 @@ required-features = ["std"]
 
 [dev-dependencies]
 tempfile = "3"
-object = { version = "0.36", default-features = false, features = [
+object = { version = "0.40", default-features = false, features = [
     "read",
     "std",
     "elf",
