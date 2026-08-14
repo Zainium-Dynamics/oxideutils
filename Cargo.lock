@@ -4,15 +4,15 @@ version = 4
 
 [[package]]
 name = "addr2line"
-version = "0.24.2"
+version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfbe277e56a376000877090da837660b4427aad530e3028d44e0bffe4f89a1c1"
+checksum = "e567177890eb1617b1f774005b66b26b2377afd138a2ca37aae7d8f0c81429d4"
 dependencies = [
- "cpp_demangle",
+ "cpp_demangle 0.5.1",
  "fallible-iterator",
- "gimli",
+ "gimli 0.34.0",
  "memmap2",
- "object",
+ "object 0.40.0",
  "rustc-demangle",
  "smallvec",
  "typed-arena",
@@ -256,6 +256,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cpp_demangle"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0667304c32ea56cb4cd6d2d7c0cfe9a2f8041229db8c033af7f8d69492429def"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "crc32fast"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -355,6 +364,15 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 dependencies = [
  "fallible-iterator",
  "indexmap",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "gimli"
+version = "0.34.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1033caf0b349c518623b5396bfb2cf0bddf44f0306d543a250e5743297aafd10"
+dependencies = [
  "stable_deref_trait",
 ]
 
@@ -552,8 +570,19 @@ dependencies = [
  "hashbrown 0.15.5",
  "indexmap",
  "memchr",
- "ruzstd",
+ "ruzstd 0.7.3",
  "wasmparser",
+]
+
+[[package]]
+name = "object"
+version = "0.40.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd229a0361b9d0d4396176e02d65897f487eebeab7caa6d443855ee152ca0b9c"
+dependencies = [
+ "flate2",
+ "memchr",
+ "ruzstd 0.9.0",
 ]
 
 [[package]]
@@ -592,7 +621,7 @@ dependencies = [
  "anyhow",
  "clap",
  "iced-x86",
- "object",
+ "object 0.36.7",
  "oxideutils-core",
  "tempfile",
 ]
@@ -602,7 +631,7 @@ name = "oxide-cxxfilt"
 version = "0.1.0"
 dependencies = [
  "clap",
- "cpp_demangle",
+ "cpp_demangle 0.4.5",
  "oxideutils-core",
  "rustc-demangle",
 ]
@@ -623,7 +652,7 @@ dependencies = [
  "anyhow",
  "clap",
  "goblin",
- "object",
+ "object 0.36.7",
  "oxideutils-core",
  "tempfile",
 ]
@@ -650,7 +679,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "object",
+ "object 0.36.7",
  "oxideutils-core",
 ]
 
@@ -667,7 +696,7 @@ name = "oxide-size"
 version = "0.1.0"
 dependencies = [
  "clap",
- "object",
+ "object 0.36.7",
  "oxideutils-core",
 ]
 
@@ -697,14 +726,14 @@ dependencies = [
  "byteorder",
  "clap",
  "colored",
- "cpp_demangle",
- "gimli",
+ "cpp_demangle 0.4.5",
+ "gimli 0.31.1",
  "goblin",
  "iced-x86",
  "indexmap",
  "log",
  "memmap2",
- "object",
+ "object 0.36.7",
  "once_cell",
  "rustc-demangle",
  "serde",
@@ -814,7 +843,16 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fad02996bfc73da3e301efe90b1837be9ed8f4a462b6ed410aa35d00381de89f"
 dependencies = [
- "twox-hash",
+ "twox-hash 1.6.3",
+]
+
+[[package]]
+name = "ruzstd"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a252f5e20f038fe7b4ea53e073e65398d652c864cc162fc77c56c2f13717b888"
+dependencies = [
+ "twox-hash 2.1.3",
 ]
 
 [[package]]
@@ -1035,6 +1073,12 @@ dependencies = [
  "cfg-if",
  "static_assertions",
 ]
+
+[[package]]
+name = "twox-hash"
+version = "2.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8464ec13c3691491391d9fce00f6416c9a48e46972f72d7865688be2080192c9"
 
 [[package]]
 name = "typed-arena"
