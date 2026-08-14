@@ -1,0 +1,250 @@
+# OxideUtils — GitHub Actions CI
+# Zainium Dynamics · https://zainiumdynamics.tech
+#
+# Mirrors the GitLab CI pipeline: test → build → fuzz → bench → release
+# Trigger: push, pull_request, schedule (weekly fuzz), manual dispatch
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly fuzz run — Sunday 03:00 UTC
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTUP_MAX_RETRIES: 10
+  CARGO_NET_RETRY: 10
+
+# Cancel in-progress runs for the same branch/PR (not tags)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────
+  # Test: fmt + clippy + unit/integration tests
+  # ──────────────────────────────────────────────────────────────────
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.93"
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: cargo-test-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-test-${{ runner.os }}-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential clang libclang-dev llvm binutils > /dev/null
+
+      - name: Fetch dependencies
+        run: cargo fetch --locked || cargo fetch
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy lint
+        run: cargo clippy --workspace --all-targets --no-deps -- -D warnings
+
+      - name: Run tests
+        run: cargo test --workspace
+
+  # ──────────────────────────────────────────────────────────────────
+  # Build: workspace release + no_std kernel core
+  # ──────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.93"
+
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: cargo-build-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-build-${{ runner.os }}-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential clang libclang-dev llvm binutils zstd > /dev/null
+
+      - name: Fetch dependencies
+        run: cargo fetch --locked || cargo fetch
+
+      - name: Build all tools (release)
+        run: |
+          bash scripts/build-all.sh
+          cargo build --workspace --release
+
+      - name: Build no_std kernel core
+        run: |
+          rustup target add x86_64-unknown-none || true
+          cargo build -p oxideutils-core --release \
+            --no-default-features --features "alloc,disasm,kernel" \
+            --target-dir target-nostd
+
+      - name: Upload release binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: oxideutils-binaries
+          path: target/release/oxide-*
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────────
+  # Fuzz: cargo-fuzz (nightly, scheduled or manual)
+  # ──────────────────────────────────────────────────────────────────
+  fuzz:
+    name: Fuzz
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential clang libclang-dev llvm > /dev/null
+
+      - name: Install cargo-fuzz
+        run: cargo +nightly install cargo-fuzz || true
+
+      - name: Run fuzz targets
+        run: |
+          if [ -d "fuzz" ]; then
+            echo "=== Running Cargo Fuzz Targets ==="
+            for target in $(cargo fuzz list); do
+              echo "Fuzzing target: $target"
+              cargo +nightly fuzz run "$target" -- \
+                -max_total_time=60 -runs=100000 || exit 1
+            done
+          else
+            echo "No fuzz directory found, skipping fuzzing runner."
+          fi
+
+      - name: Upload fuzz artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts
+          path: fuzz/artifacts/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────────
+  # Bench: quick smoke benchmark (manual / scheduled)
+  # ──────────────────────────────────────────────────────────────────
+  bench:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.93"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential clang libclang-dev llvm binutils > /dev/null
+
+      - name: Fetch + build
+        run: |
+          cargo fetch --locked || cargo fetch
+          cargo build --release -p oxide-objdump -p oxide-nm -p oxide-readelf
+
+      - name: Run benchmarks
+        run: |
+          BIN=/bin/ls
+          echo "=== oxide-objdump -h ==="
+          time ./target/release/oxide-objdump -h "$BIN" >/dev/null
+          if command -v objdump >/dev/null; then
+            echo "=== gnu objdump -h ==="
+            time objdump -h "$BIN" >/dev/null
+          fi
+
+  # ──────────────────────────────────────────────────────────────────
+  # Release: tag-triggered, builds source archive + GitHub Release
+  # ──────────────────────────────────────────────────────────────────
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, build]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq zstd > /dev/null
+
+      - name: Build source archive
+        run: |
+          mkdir -p dist
+          VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE="oxideutile-${VERSION}"
+          git archive --format=tar --prefix="${PACKAGE}/" "$GITHUB_SHA" \
+            | zstd -19 -T0 -o "dist/${PACKAGE}.tar.zst"
+          sha256sum "dist/${PACKAGE}.tar.zst" > "dist/${PACKAGE}.sha256"
+          echo "PACKAGE=${PACKAGE}" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "OxideUtils ${{ github.ref_name }}"
+          body: |
+            Automated workspace source release for ${{ github.ref_name }}.
+
+            - Built from commit: ${{ github.sha }}
+            - Artifact: `dist/${{ env.PACKAGE }}.tar.zst`
+            - Checksum: `dist/${{ env.PACKAGE }}.sha256`
+            - Archive excludes `target/` (generated via `git archive`).
+            - Changelog: [CHANGELOG.md](CHANGELOG.md)
+          files: |
+            dist/${{ env.PACKAGE }}.tar.zst
+            dist/${{ env.PACKAGE }}.sha256
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
