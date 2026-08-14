@@ -63,7 +63,7 @@ object = { version = "0.36", default-features = false, features = [
     "unaligned",
 ] }
 memmap2 = "0.9"
-goblin = "0.9"
+goblin = "0.10"
 gimli = "0.31"
 addr2line = "0.24"
 capstone = "0.12"
