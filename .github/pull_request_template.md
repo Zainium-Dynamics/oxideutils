@@ -15,7 +15,6 @@ Brief description of what this PR does.
 - [ ] `cargo fmt --all`
 - [ ] `cargo clippy --workspace --all-targets -- -D warnings`
 - [ ] `cargo test --workspace`
-- [ ] Docs / CHANGELOG updated (if user-visible)
 - [ ] Kernel path still compiles (if `oxideutils-core` changed):
       `cargo build -p oxideutils-core --no-default-features --features alloc,disasm,kernel`
 
