@@ -1,10 +1,10 @@
 # OxideUtils — attach source archive to a published GitHub Release
 # Zainium Dynamics · https://zainiumdynamics.tech
 #
-# Does not create tags or releases. Publish a GitHub Release for a
-# v* tag first; this job then uploads:
-#   dist/oxideutile-<tag>.tar.zst
-#   dist/oxideutile-<tag>.sha256
+# this willl rusn when we will pubish or added a tag and the this will run and crate these assests then user will crate a relse  
+# v* tag first; this job :
+#   oxideutile-<tag>.tar.zst
+#   oxideutile-<tag>.sha256
 
 name: Release assets
 
