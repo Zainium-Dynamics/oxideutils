@@ -23,7 +23,7 @@ Start here if you need more than the root [README.md](../README.md).
 | [AUDIT-REPORT-BINUTILS-2.46.1.md](./AUDIT-REPORT-BINUTILS-2.46.1.md) | Architects | Full audit + risk + roadmap |
 | [faq.md](./faq.md) | Everyone | Common questions |
 | [configuration.md](./configuration.md) | Users / packagers | **TOML** config (`true`/`false`) |
-| [release-process.md](./release-process.md) | Maintainers | Generic tag + GitLab release checklist |
+| [release-process.md](./release-process.md) | Maintainers | Tag + GitHub release checklist |
 | [man/](./man/) | Unix man pages | Source for `man oxide-*` |
 
 ## Project meta
@@ -33,7 +33,8 @@ Start here if you need more than the root [README.md](../README.md).
 | [../ROADMAP.md](../ROADMAP.md) | 12-phase plan |
 | [../CHANGELOG.md](../CHANGELOG.md) | Versions |
 | [../CONTRIBUTING.md](../CONTRIBUTING.md) | Patches |
-| [../CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | Community |
+| [../SECURITY.md](../SECURITY.md) | Security policy |
+| [../ARCHITECTURE.md](../ARCHITECTURE.md) | Architecture overview |
 
 ## Quick links
 

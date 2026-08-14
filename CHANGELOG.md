@@ -5,6 +5,35 @@ follows [Keep a Changelog](https://keepachangelog.com/). Behavioural
 reference is GNU binutils **2.46.1** (QA comparison only — no GNU code
 is linked; OxideUtils is not a GNU project).
 
+## [0.1.1-dev] — 2026-08-14
+
+### Changed
+
+- **Migrated primary hosting from GitLab to GitHub**
+  ([Zainium-Dynamics/oxideutils](https://github.com/Zainium-Dynamics/oxideutils)).
+- Replaced GitLab CI (`.gitlab-ci.yml`) with GitHub Actions
+  (`.github/workflows/ci.yml`) — same pipeline stages: test → build →
+  fuzz → bench → release.
+- Release process now uses GitHub Releases with `softprops/action-gh-release`.
+- Updated `Cargo.toml` repository URL to point to GitHub.
+
+### Added
+
+- GitHub community files: `SECURITY.md`, issue templates (bug report,
+  feature request), pull request template, `FUNDING.yml`.
+- Dependabot configuration for automated Cargo + Actions dependency
+  updates.
+- `ARCHITECTURE.md` (root-level) — quick architectural overview for new
+  contributors.
+- `rust-toolchain.toml` updated with `targets` for `x86_64-unknown-none`.
+- `.editorconfig` for consistent formatting across editors.
+- Improved `.gitignore` with GitHub-specific entries.
+
+### Fixed
+
+- `CONTRIBUTING.md` patch checklist now references `cargo oxide-kernel`
+  alias correctly.
+
 ## [0.1.0-alpha] - 2026-08-13
 
 Initial public release, tagged as an **alpha**: a working Rust
@@ -31,7 +60,7 @@ binutils-suite foundation, not a drop-in GNU replacement yet — see
   preprocessor.
 - `oxide-ar` archive create/list/delete round-trip (`t`/`p`/`x` read
   paths plus `rcs`-style write path and symbol index).
-- GitLab CI: build + test + clippy/fmt gate, fuzz stage scaffold,
+- CI pipeline (GitHub Actions): build + test + clippy/fmt gate, fuzz stage scaffold,
   benchmark stage, and a tag-triggered release job that publishes a
   checksummed workspace source tarball.
 - Docs suite: `ROADMAP.md`, `docs/AUDIT-REPORT-BINUTILS-2.46.1.md`,

@@ -6,6 +6,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Zainium-Dynamics/oxideutils/actions/workflows/ci.yml"><img src="https://github.com/Zainium-Dynamics/oxideutils/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Zainium-Dynamics/oxideutils/releases"><img src="https://img.shields.io/github/v/release/Zainium-Dynamics/oxideutils?include_prereleases&label=release" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPLv3-blue.svg" alt="License"></a>
+  <img src="https://img.shields.io/badge/rust-1.85%2B-orange.svg" alt="Rust 1.85+">
+</p>
+
+<p align="center">
   GNU-binutils-<em>compatible</em> · <strong>Not a GNU project</strong> · GPLv3 · <code>std</code> + <code>no_std</code>
 </p>
 
@@ -406,13 +413,15 @@ Guide: [docs/kernel-integration.md](docs/kernel-integration.md)
 oxideutils/
 ├── README.md                 ← you are here
 ├── LICENSE                   ← GPLv3 only
+├── ARCHITECTURE.md           ← quick architecture overview
+├── SECURITY.md               ← security / vulnerability policy
 ├── Cargo.toml                ← workspace
 ├── oxideutils.toml           ← **only** config (build + tools + runtime)
 ├── build/oxide_build.rs      ← build.rs shared logic (reads TOML)
 ├── scripts/build-all.sh      ← optional wrapper → cargo build
+├── .github/workflows/ci.yml  ← GitHub Actions CI pipeline
 ├── ROADMAP.md
 ├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
 ├── CHANGELOG.md
 ├── docs/                     ← full documentation set
 │   ├── README.md             ← docs index
@@ -531,7 +540,7 @@ cargo check --workspace
 ```
 
 - Licence of contributions: **GPLv3 only** (Zainium Dynamics product)  
-- Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)  
+- Security issues: [SECURITY.md](SECURITY.md)  
 - Details: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---

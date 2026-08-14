@@ -10,4 +10,6 @@
 [toolchain]
 channel = "1.93"
 components = ["rustfmt", "clippy", "rustc", "cargo"]
+targets = ["x86_64-unknown-none"]
 profile = "minimal"
+

@@ -1,23 +1,45 @@
+# OxideUtils — .gitignore
+# Zainium Dynamics · https://zainiumdynamics.tech
+
+# Cargo / Rust build artifacts
 /target
 /target-nostd
 **/*.rs.bk
 Cargo.lock.bak
-*.swp
-*.swo
-*~
-.idea/
-.vscode/
-.claude/
 *.pdb
 *.o
 *.a
 *.so
 *.dylib
 *.rlib
+
+# Editor / IDE
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.claude/
+.zed/
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# OxideUtils build/release artifacts
 /dist
 /bench-results
 /corpus
 *.profraw
 *.profdata
 /flamegraph.svg
+
+# Coverage
+/coverage/
+lcov.info
+*.lcov
+tarpaulin-report.html
+
+# Fuzz corpus (tracked separately if needed)
+/fuzz/corpus/
+/fuzz/artifacts/
