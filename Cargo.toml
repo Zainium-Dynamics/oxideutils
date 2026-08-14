@@ -68,7 +68,7 @@ gimli = "0.31"
 addr2line = "0.24"
 capstone = "0.12"
 iced-x86 = { version = "1.21", default-features = false, features = ["std", "decoder", "encoder", "gas"] }
-colored = "2"
+colored = "3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rayon = "1"
