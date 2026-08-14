@@ -51,7 +51,7 @@ indexmap = { version = "2", optional = true }
 once_cell = { version = "1", optional = true }
 cpp_demangle = { version = "0.4", optional = true }
 addr2line = { version = "0.24", optional = true }
-gimli = { version = "0.31", optional = true }
+gimli = { version = "0.34", optional = true }
 
 [features]
 # Host tools: x86 + AArch64 disasm + DWARF

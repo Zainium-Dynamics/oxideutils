@@ -64,7 +64,7 @@ object = { version = "0.36", default-features = false, features = [
 ] }
 memmap2 = "0.9"
 goblin = "0.9"
-gimli = "0.31"
+gimli = "0.34"
 addr2line = "0.24"
 capstone = "0.12"
 iced-x86 = { version = "1.21", default-features = false, features = ["std", "decoder", "encoder", "gas"] }
