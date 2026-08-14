@@ -419,10 +419,9 @@ oxideutils/
 ├── oxideutils.toml           ← **only** config (build + tools + runtime)
 ├── build/oxide_build.rs      ← build.rs shared logic (reads TOML)
 ├── scripts/build-all.sh      ← optional wrapper → cargo build
-├── .github/workflows/ci.yml  ← GitHub Actions CI pipeline
+├── .github/workflows/        ← CI + release-asset workflows
 ├── ROADMAP.md
 ├── CONTRIBUTING.md
-├── CHANGELOG.md
 ├── docs/                     ← full documentation set
 │   ├── README.md             ← docs index
 │   ├── architecture.md
@@ -472,7 +471,7 @@ Architecture deep-dive: [docs/architecture.md](docs/architecture.md)
 | [docs/configuration.md](docs/configuration.md) | **TOML config** (`true` / `false`) |
 | [ROADMAP.md](ROADMAP.md) | 12-phase plan |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
-| [CHANGELOG.md](CHANGELOG.md) | Release notes |
+| [docs/release-process.md](docs/release-process.md) | Tag + GitHub release checklist |
 
 ---
 

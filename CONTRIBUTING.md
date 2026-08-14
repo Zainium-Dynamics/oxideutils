@@ -32,7 +32,7 @@ cargo check --workspace
 3. Keep **kernel path** (`no_std` + `alloc`) compiling — run `cargo oxide-kernel` (or the cargo line in docs/building.md) before large core changes.  
 4. Add tests for new flags or format paths when practical.  
 5. Do not rebrand as GNU; version strings stay Zainium Dynamics.  
-6. Document user-facing changes in `CHANGELOG.md` and `docs/` when needed.
+6. Document user-facing changes in `docs/` when needed.
 
 ## Pull request workflow
 
@@ -55,5 +55,5 @@ cargo check --workspace
 - [ ] `cargo oxide-kernel` if you touched core  
 - [ ] `cargo fmt --all`  
 - [ ] `cargo clippy --workspace --all-targets -- -D warnings`
-- [ ] Docs / CHANGELOG if user-visible  
+- [ ] Docs if user-visible
 

@@ -41,8 +41,7 @@ archives). Security-relevant areas include:
 ## Disclosure
 
 We follow coordinated disclosure. Once a fix is released, we will credit
-the reporter (unless they prefer anonymity) in the CHANGELOG and release
-notes.
+the reporter (unless they prefer anonymity) in the GitHub release notes.
 
 ## Thank you
 

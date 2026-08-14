@@ -255,4 +255,4 @@ fn show(o: &dyn ObjectView) {
 ## Versioning
 
 - **0.1.x** — public API may evolve; pin path deps in kernel  
-- Breaking changes will be noted in [CHANGELOG.md](../CHANGELOG.md)  
+- Breaking changes will be noted in the GitHub release notes

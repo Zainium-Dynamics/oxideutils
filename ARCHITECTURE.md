@@ -62,12 +62,13 @@ CLI args (clap)
 
 ## CI pipeline
 
-GitHub Actions (`.github/workflows/ci.yml`):
+GitHub Actions:
 
-| Stage        | Trigger              | What it does                          |
-|--------------|----------------------|---------------------------------------|
-| **test**     | push / PR            | fmt + clippy + `cargo test`           |
-| **build**    | push / PR            | workspace release + `no_std` kernel   |
-| **fuzz**     | weekly / manual      | `cargo-fuzz` on all targets           |
-| **bench**    | weekly / manual      | smoke benchmark vs GNU                |
-| **release**  | tag `v*`             | source tarball + GitHub Release       |
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| **CI** (`.github/workflows/ci.yml`) | every push / PR | fmt + clippy + `cargo test`, then workspace release + `no_std` kernel |
+| **Release assets** (`.github/workflows/release.yml`) | published GitHub Release | attach `oxideutile-<tag>.tar.zst` + `.sha256` |
+
+Releases are **not** created automatically. Tag the commit, publish a
+GitHub Release for that tag, and the release workflow attaches the
+source archive.

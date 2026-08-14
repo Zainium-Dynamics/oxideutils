@@ -31,7 +31,6 @@ Start here if you need more than the root [README.md](../README.md).
 | Doc | Content |
 |-----|---------|
 | [../ROADMAP.md](../ROADMAP.md) | 12-phase plan |
-| [../CHANGELOG.md](../CHANGELOG.md) | Versions |
 | [../CONTRIBUTING.md](../CONTRIBUTING.md) | Patches |
 | [../SECURITY.md](../SECURITY.md) | Security policy |
 | [../ARCHITECTURE.md](../ARCHITECTURE.md) | Architecture overview |
